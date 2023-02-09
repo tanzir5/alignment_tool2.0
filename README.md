@@ -18,4 +18,4 @@ for seg_pair in alignments:
   print(seg_pair)
 ```
 
-Try out the test_examples.py to see different ways you can use the *align_sequences()* function. 
+Try out the test_examples.py to see different ways you can use the *align_sequences()* function.
