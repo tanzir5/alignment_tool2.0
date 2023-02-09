@@ -1,0 +1,5 @@
+setup.py
+alignment.egg-info/PKG-INFO
+alignment.egg-info/SOURCES.txt
+alignment.egg-info/dependency_links.txt
+alignment.egg-info/top_level.txt

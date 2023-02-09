@@ -1,12 +1,10 @@
-import argparse
 import seaborn as sns
 import sys
-import utility 
+import aligners.utility 
 
 import numpy as np
-from preprocessor import Preprocessor
-from smith_waterman import Aligner
-from utility import get_paragraphs, parse_text, print_matches, show_heat_map
+from aligners.preprocessor import Preprocessor
+from aligners.smith_waterman import Aligner
 import matplotlib.pyplot as plt
 
 def get_removed_segments(alignments, indices, do_seq1):
