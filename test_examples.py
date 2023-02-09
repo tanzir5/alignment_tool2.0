@@ -1,6 +1,7 @@
-from align_pipeline import align_sequences 
+from aligners.align_pipeline import align_sequences 
 import numpy as np
-from smith_waterman import Aligner
+from aligners.smith_waterman import Aligner
+import os
 
 def test_aligner():
   # testing alignment from similarity matrix
@@ -32,9 +33,17 @@ def test_align_pipeline_embedding():
 
 def test_align_pipeline_text(unit):
   if unit == 'paragraph':
-    with open('test_paragraph1.txt') as f:
+    if (os.path.exists('./misc/test_paragraphs1.txt') is False or 
+        os.path.exists('./misc/test_paragraphs2.txt') is False
+      ):
+        print("cannot test for paragraphs since './misc/test_paragraphs1.txt'",
+          "or './misc/test_paragraphs1.txt' do not exist. Run this code from",
+          "the alignments2.0 directory.")
+        return 
+    
+    with open('./misc/test_paragraphs1.txt') as f:
       text1 = f.read()
-    with open('test_paragraph2.txt') as f:
+    with open('./misc/test_paragraphs2.txt') as f:
       text2 = f.read()
   else:
     text1 = "I eat rice, burger, pizza. Rome is in Italy."
