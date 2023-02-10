@@ -80,6 +80,7 @@ def align_sequences(
   sim_config=None,
   ignore=None,
   no_gap=False,
+  save_emb_dirs=None,
   return_preprocessor=False,
   return_aligner=False,
 ): 
@@ -95,7 +96,8 @@ def align_sequences(
     size_a=unit1,
     size_b=unit2,
     sim_config=sim_config,
-    clip_length=clip
+    clip_length=clip,
+    save_emb_dirs=save_emb_dirs,
   )
 
   aligner = Aligner(preprocessor.sim_matrix, ignore)

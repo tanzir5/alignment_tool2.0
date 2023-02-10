@@ -76,7 +76,8 @@ class Preprocessor:
     size_a = 'paragraph',
     size_b = 'paragraph',
     sim_config = None,
-    clip_length = None
+    clip_length = None,
+    save_emb_dirs = None,
     ):
     if sim_config is None:
       sim_config = DEFAULT_SIM_CONFIG
@@ -106,6 +107,21 @@ class Preprocessor:
     self.sim_config = sim_config
     
     self.sim_matrix = self.get_sim_matrix(seq_a, seq_b, size_a, size_b)
+    if save_emb_dirs is not None:
+      self.save_embs(save_emb_dirs)
+
+  def save_embs(self, save_emb_dirs):
+    try:
+      assert(hasattr(self, 'seq_a_emb') and hasattr(self, 'seq_b_emb'))
+    except:
+      print("save_emb_dirs is passed but the code is not saving embeddings!")
+      exit(0)
+    try:
+      np.save(save_emb_dirs[0], self.seq_a_emb)
+      np.save(save_emb_dirs[1], self.seq_b_emb)
+    except:
+      print("save_emb_dirs is not a list of two strings(paths)")
+      exit(0)
 
   def _init_config(self, sim_config):
     if 'threshold' not in sim_config:
@@ -370,6 +386,8 @@ class Preprocessor:
       else:
         seq_a = self.get_sbert_embedding(seq_a)
         seq_b = self.get_sbert_embedding(seq_b)
+      self.seq_a_emb = seq_a
+      self.seq_b_emb = seq_b
       self.raw_sim_matrix = self.get_embedding_sim(seq_a, seq_b)
       
     return self.normalize(self.raw_sim_matrix)
