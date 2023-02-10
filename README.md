@@ -1,4 +1,9 @@
-You need to run the run.sh script first. 
+It is highly recommended (but not required) that you create a virtual environment first.
+```
+python -m venv align_env 
+```
+
+Then run the run.sh script first. 
 ```
 ./run.sh 
 ```
