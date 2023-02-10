@@ -3,7 +3,7 @@ You need to run the run.sh script first.
 ./run.sh 
 ```
 
-Try out the run_simple_example.py to see how to use the alignment tool. 
+Then try out the run_simple_example.py to see how to use the alignment tool. 
 
 ```
 from aligners.align_pipeline import align_sequences 
