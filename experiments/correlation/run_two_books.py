@@ -1,42 +1,37 @@
-import sys
-sys.path.append('../../../alignment_tool2.0/codes')
-
-import glob
-from tqdm import tqdm
-import pandas as pd
-from align_pipeline import align_sequences
-import os
-import xml.etree.ElementTree as ET
+import spacy
+from multiset import *
 import numpy as np
-import multiprocessing as mp
+from scipy import stats
+from scipy.special import expit, logit
+from sentence_transformers import SentenceTransformer
+from sentence_transformers import util
+from sklearn.feature_extraction.text import TfidfVectorizer
+import copy
+from tqdm import tqdm
+import torch
+import torchtext
+import re
+from transformers import BertModel, BertTokenizer
+import numpy as np 
+import pandas as pd
+from aligners.align_pipeline import align_sequences
 
-def process_two_books(book1, book2, sim_func, z_thresh, emb1_path, emb2_path):
-  #i, j = args[0], args[1]
-  book1 = str(book1)
-  book2 = str(book2)
-  seq1 = np.load(emb1_path + '/' + book1 + '.npy')
-  seq2 = np.load(emb2_path + '/' + book2 + '.npy')
-  print("size and books:")
-  print(seq1.shape, seq2.shape)
-  print(book1, book2)
-  aligner = align_sequences(
-    seq1, 
-    seq2, 
-    unit1='embedding', 
-    unit2='embedding', 
-    sim=sim_func, 
-    z_thresh=z_thresh)
-  dp = aligner.dp
-  dp_save_path = '../../data/misc/classics_collection_'+book1+"_"+book2
-  np.save(dp_save_path, dp)
 
-z_thresh = 2
-sim_func = 'sbert'
-id1 = '30127'
-id2 = '10748'
+def read_paras(path):
+  df = pd.read_csv(path)
+  return df['para'].tolist()
 
-emb1_path = '../../data/positive_pairs/embs/'
-emb2_path = '../../data/positive_pairs/embs/'
+seq1 = read_paras('data/positive_pairs/text_csv/10748.csv')
+seq2 = read_paras('data/positive_pairs/text_csv/30127.csv')
 
-if __name__ ==  '__main__':
-  process_two_books(id1, id2, sim_func, z_thresh, emb1_path, emb2_path)
+ret = align_sequences(
+  seq1, 
+  seq2, 
+  unit1='paragraph', 
+  unit2='paragraph', 
+  sim='sbert', 
+  save_emb_dirs=['misc/10748.npy', 'misc/30127.npy'],
+  return_aligner=True,
+)
+
+np.save('data/experiments/correlation/10748_30127_align_score.npy', ret['aligner'].dp)
