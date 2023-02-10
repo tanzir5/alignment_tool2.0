@@ -1,6 +1,7 @@
 It is highly recommended (but not required) that you create a virtual environment first.
 ```
 python -m venv align_env 
+source align_env/bin/activate
 ```
 
 Then run the run.sh script first. 
