@@ -15,6 +15,7 @@ import spacy
 import torch
 import torchtext
 import re
+import os
 
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 nlp = spacy.load("en_core_web_sm")
@@ -73,12 +74,12 @@ class Preprocessor:
     self, 
     seq_a, 
     seq_b,
-    size_a = 'paragraph',
-    size_b = 'paragraph',
-    sim_config = None,
-    clip_length = None,
-    save_emb_dirs = None,
-    ):
+    size_a='paragraph',
+    size_b='paragraph',
+    sim_config=None,
+    clip_length=None,
+    save_emb_dirs=None,
+  ):
     if sim_config is None:
       sim_config = DEFAULT_SIM_CONFIG
     """Initializes preprocessor."""
@@ -95,9 +96,10 @@ class Preprocessor:
     	seq_a = seq_a[:clip_length]
     	seq_b = seq_b[:clip_length]
 
-    if isinstance(seq_a, str):
+    if isinstance(seq_a, str) and size_a != 'embedding_path':
       seq_a, self.indices_a = self._segment(seq_a, size_a)
       seq_b, self.indices_b = self._segment(seq_b, size_b)  
+
 
     self.sbert = None
     self.glove = None
@@ -106,23 +108,15 @@ class Preprocessor:
     self.final_seq_b = seq_b
     self.sim_config = sim_config
     
-    self.sim_matrix = self.get_sim_matrix(seq_a, seq_b, size_a, size_b)
+    self.raw_sim_matrix = self.get_sim_matrix(seq_a, seq_b, size_a, size_b)
+    if sim_config['func'] == 'exact':
+      self.sim_matrix = self.raw_sim_matrix
+    else:
+      self.sim_matrix = self.normalize(self.raw_sim_matrix)
     if save_emb_dirs is not None:
       self.save_embs(save_emb_dirs)
 
-  def save_embs(self, save_emb_dirs):
-    try:
-      assert(hasattr(self, 'seq_a_emb') and hasattr(self, 'seq_b_emb'))
-    except:
-      print("save_emb_dirs is passed but the code is not saving embeddings!")
-      exit(0)
-    try:
-      np.save(save_emb_dirs[0], self.seq_a_emb)
-      np.save(save_emb_dirs[1], self.seq_b_emb)
-    except:
-      print("save_emb_dirs is not a list of two strings(paths)")
-      exit(0)
-
+  #init functions
   def _init_config(self, sim_config):
     if 'threshold' not in sim_config:
       sim_config['threshold'] = DEFAULT_Z_THRESHOLD
@@ -132,6 +126,34 @@ class Preprocessor:
       sim_config['std'] = DEFAULT_STD_VALUES[sim_config['func']]
     return sim_config
 
+  def _init_glove(self):
+    self.glove = torchtext.vocab.GloVe(name="840B", dim= GLOVE_DIM) 
+
+  def _init_sbert(self):
+    self.sbert = SentenceTransformer(SBERT_MODEL_NAME).to(DEVICE)
+    
+  def _init_bert(self):
+    self.bert = {
+      'tokenizer':BertTokenizer.from_pretrained('bert-base-uncased'),
+      'model':BertModel.from_pretrained('bert-base-uncased')
+    }
+
+  #check everything's ok functions
+  def _check_size_compatibility(self, size_a, size_b):
+    is_compatible = True
+    if size_a == 'embedding_path':
+      is_compatible = (size_b == 'embedding_path')
+    elif size_a == 'character':
+      is_compatible = (size_b == 'character')
+    elif size_a == 'word':
+      is_compatible = (size_b == 'word')
+    elif size_a == 'embedding':
+      is_compatible = (size_b == 'embedding')
+    else:
+      is_compatible = (size_b != 'character' and size_b != 'word')
+    
+    return is_compatible
+  
   def _check_validity(self, seq_a, seq_b, size_a, size_b, sim_config):
     try:
       assert(type(seq_a) == type(seq_b))
@@ -142,9 +164,9 @@ class Preprocessor:
       exit(0)
 
     try:
-      if size_a == 'embedding' or size_a == 'embedding_path':
+      if size_a == 'embedding':
         assert(isinstance(seq_a, str)==False)
-      if size_b == 'embedding' or size_b == 'embedding_path':
+      if size_b == 'embedding':
         assert(isinstance(seq_b, str)==False)
     except:
       print("size cannot be embedding or embedding_path when sequence is str.")
@@ -194,6 +216,7 @@ class Preprocessor:
       print("list of supported sim functions:", VALID_SIM_FUNCS)
       exit(0)
 
+  #segment functions
   def _segment_into_character(self, text):
     return [ch for ch in text]
 
@@ -250,91 +273,7 @@ class Preprocessor:
     else:
       assert(False)
 
-  def _init_glove(self):
-    self.glove = torchtext.vocab.GloVe(name="840B", dim= GLOVE_DIM) 
-
-  def _init_sbert(self):
-    self.sbert = SentenceTransformer(SBERT_MODEL_NAME).to(DEVICE)
-    
-  def _init_bert(self):
-    self.bert = {
-      'tokenizer':BertTokenizer.from_pretrained('bert-base-uncased'),
-      'model':BertModel.from_pretrained('bert-base-uncased')
-    }
-
-  def load_embedding(self, path):
-    if os.path.exists(path):
-      embs = np.load(path)
-      return embs
-    else:
-      raise Exception(path + " does not exist.") 
-
-  def get_embedding_sim(self, seq_a, seq_b):
-    sim = util.cos_sim(seq_a, seq_b)
-    return sim.detach().cpu().numpy()  
-    
-  def _check_size_compatibility(self, size_a, size_b):
-    is_compatible = True
-    if size_a == 'embedding_path':
-      is_compatible = (size_b == 'embedding_path')
-    elif size_a == 'character':
-      is_compatible = (size_b == 'character')
-    elif size_a == 'word':
-      is_compatible = (size_b == 'word')
-    elif size_a == 'embedding':
-      is_compatible = (size_b == 'embedding')
-    else:
-      is_compatible = (size_b != 'character' and size_b != 'word')
-    
-    return is_compatible
-    
-  def get_sim_matrix(self, seq_a, seq_b, size_a, size_b):
-    if size_a == 'embedding_path':
-      seq_a = self.load_embedding(seq_a)
-      seq_b = self.load_embedding(seq_b)
-      return self.get_embedding_sim(seq_a, seq_b)  
-    elif size_a == 'character':
-      return self.get_sim_matrix_char_char(seq_a, seq_b)
-    elif size_a == 'word':
-      return self.get_sim_matrix_word_word(seq_a, seq_b)
-    elif size_a == 'embedding':
-      return self.get_embedding_sim(seq_a, seq_b) 
-    else:
-      return self.get_sim_matrix_text_text(seq_a, seq_b)
-  
-  def get_sim_matrix_word_word(self, seq_a, seq_b):
-    func = self.sim_config['func']
-    if func == 'exact':
-      self.raw_sim_matrix = self.get_exact_sim(seq_a, seq_b)
-      return self.raw_sim_matrix
-    elif func == 'glove':
-      seq_a = self.get_glove_embedding(seq_a) 
-      seq_b = self.get_glove_embedding(seq_b)
-      self.raw_sim_matrix = self.get_embedding_sim(seq_a, seq_b)
-      return self.normalize(self.raw_sim_matrix)
-    else:
-      assert(False)
-
-  def get_exact_sim(self, seq_a, seq_b):
-    ret = np.zeros((len(seq_a), len(seq_b)))
-    for i in range(len(seq_a)):
-      for j in range(len(seq_b)):
-        if seq_a[i] == seq_b[j]:
-          ret[i][j] = 1
-        else:
-          ret[i][j] = -1
-    return ret
-
-  def get_glove_embedding(self, seq):
-    if self.glove is None:
-      self._init_glove()
-    ret = []
-    for word in seq:
-      cur_emb = self.glove[word] 
-      ret.append(cur_emb.unsqueeze(0))
-    ret = torch.cat(ret)
-    return ret
-
+  #misc utility functions 
   def normalize(self, sim_matrix):
     '''
       normalization is done by doing the following: 
@@ -366,44 +305,52 @@ class Preprocessor:
     
     return sim_matrix
 
-  def get_sim_matrix_text_text(self, seq_a, seq_b):
-    func = self.sim_config['func']
-    if func == 'jaccard':
-      self.raw_sim_matrix = self.get_jaccard_sim(seq_a, seq_b)
-    elif func == 'tf_idf':
-      self.raw_sim_matrix = self.get_tf_idf_sim(seq_a, seq_b)
-    elif func == 'hamming_sim' : 
-      self.raw_sim_matrix = self.get_hamming_sim(seq_a, seq_b)
-    elif func == 'overlapping_glove_sim' : 
-      self.raw_sim_matrix = self.get_jaccard_glove_nn(seq_a, seq_b)
-    elif func in ['bert', 'glove', 'sbert']:
-      if func == 'bert':
-        seq_a = self.get_bert_embedding(seq_a)
-        seq_b = self.get_bert_embedding(seq_b)
-      elif func == 'glove':
-        seq_a = self.get_glove_embedding_mean(seq_a) 
-        seq_b = self.get_glove_embedding_mean(seq_b)
-      else:
-        seq_a = self.get_sbert_embedding(seq_a)
-        seq_b = self.get_sbert_embedding(seq_b)
-      self.seq_a_emb = seq_a
-      self.seq_b_emb = seq_b
-      self.raw_sim_matrix = self.get_embedding_sim(seq_a, seq_b)
-      
-    return self.normalize(self.raw_sim_matrix)
+  def get_words_multiset(self, token):
+    words_multiset = Multiset()
+    doc = nlp(token.lower())
+    for word in doc:
+      if word.text not in all_stopwords and word.text.isalnum():
+        words_multiset.add(word.text)
+    return words_multiset
 
-  def get_tf_idf_sim(self, seq_a, seq_b):
-    vectorizer = TfidfVectorizer(stop_words = {'english'})
-    all_tokens = list(copy.deepcopy(seq_a))
-    all_tokens.extend(list(seq_b))
-    vectorizer = vectorizer.fit(all_tokens)
-    
-    tf_idf_A = vectorizer.transform(seq_a).todense()
-    tf_idf_B = vectorizer.transform(seq_b).todense()
-    
-    ret = util.cos_sim(tf_idf_A, tf_idf_B)
-    ret_np = ret.detach().cpu().numpy()  
-    return ret_np
+  def get_jaccard_value(self, set_A, set_B):
+    return len((set_A & set_B)) / max(1,len((set_A | set_B))) 
+
+
+  #embedding utility functions
+  def save_embs(self, save_emb_dirs):
+    try:
+      assert(hasattr(self, 'seq_a_emb') and hasattr(self, 'seq_b_emb'))
+    except:
+      print("save_emb_dirs is passed but the code is not saving embeddings!")
+      exit(0)
+    try:
+      np.save(save_emb_dirs[0], self.seq_a_emb)
+      np.save(save_emb_dirs[1], self.seq_b_emb)
+    except:
+      print("save_emb_dirs is not a list of two strings(paths)")
+      exit(0)
+  
+  def load_embedding(self, path):
+    if os.path.exists(path):
+      embs = np.load(path)
+      return embs
+    else:
+      raise Exception(path + " does not exist.") 
+
+  def get_embedding_sim(self, seq_a, seq_b):
+    sim = util.cos_sim(seq_a, seq_b)
+    return sim.detach().cpu().numpy()  
+  
+  def get_glove_embedding(self, seq):
+    if self.glove is None:
+      self._init_glove()
+    ret = []
+    for word in seq:
+      cur_emb = self.glove[word] 
+      ret.append(cur_emb.unsqueeze(0))
+    ret = torch.cat(ret)
+    return ret
 
   def get_glove_embedding_mean(self, seq):
     if self.glove is None:
@@ -426,7 +373,7 @@ class Preprocessor:
 
   def get_sbert_embedding(self, seq):
     if self.sbert is None:
-    	self._init_sbert()
+      self._init_sbert()
     ret_np = self.sbert.encode(seq)
     return ret_np 
 
@@ -447,16 +394,81 @@ class Preprocessor:
     ret_np = ret.detach().cpu().numpy()
     return ret_np  
 
-  def get_words_multiset(self, token):
-    words_multiset = Multiset()
-    doc = nlp(token.lower())
-    for word in doc:
-      if word.text not in all_stopwords and word.text.isalnum():
-        words_multiset.add(word.text)
-    return words_multiset
 
-  def get_jaccard_value(self, set_A, set_B):
-    return len((set_A & set_B)) / max(1,len((set_A | set_B))) 
+  #similarity functions
+  def get_sim_matrix(self, seq_a, seq_b, size_a, size_b):
+    if size_a == 'embedding_path':
+      seq_a = self.load_embedding(seq_a)
+      seq_b = self.load_embedding(seq_b)
+      return self.get_embedding_sim(seq_a, seq_b)  
+    elif size_a == 'character':
+      return self.get_sim_matrix_char_char(seq_a, seq_b)
+    elif size_a == 'word':
+      return self.get_sim_matrix_word_word(seq_a, seq_b)
+    elif size_a == 'embedding':
+      return self.get_embedding_sim(seq_a, seq_b) 
+    else:
+      return self.get_sim_matrix_text_text(seq_a, seq_b)
+  
+  def get_sim_matrix_word_word(self, seq_a, seq_b):
+    func = self.sim_config['func']
+    if func == 'exact':
+      return self.get_exact_sim(seq_a, seq_b)
+    elif func == 'glove':
+      seq_a = self.get_glove_embedding(seq_a) 
+      seq_b = self.get_glove_embedding(seq_b)
+      return self.get_embedding_sim(seq_a, seq_b)
+    else:
+      assert(False)
+
+  def get_exact_sim(self, seq_a, seq_b):
+    ret = np.zeros((len(seq_a), len(seq_b)))
+    for i in range(len(seq_a)):
+      for j in range(len(seq_b)):
+        if seq_a[i] == seq_b[j]:
+          ret[i][j] = 1
+        else:
+          ret[i][j] = -1
+    return ret
+  
+  def get_sim_matrix_text_text(self, seq_a, seq_b):
+    func = self.sim_config['func']
+    if func == 'jaccard':
+      raw_sim_matrix = self.get_jaccard_sim(seq_a, seq_b)
+    elif func == 'tf_idf':
+      raw_sim_matrix = self.get_tf_idf_sim(seq_a, seq_b)
+    elif func == 'hamming_sim' : 
+      raw_sim_matrix = self.get_hamming_sim(seq_a, seq_b)
+    elif func == 'overlapping_glove_sim' : 
+      raw_sim_matrix = self.get_jaccard_glove_nn(seq_a, seq_b)
+    elif func in ['bert', 'glove', 'sbert']:
+      if func == 'bert':
+        seq_a = self.get_bert_embedding(seq_a)
+        seq_b = self.get_bert_embedding(seq_b)
+      elif func == 'glove':
+        seq_a = self.get_glove_embedding_mean(seq_a) 
+        seq_b = self.get_glove_embedding_mean(seq_b)
+      else:
+        seq_a = self.get_sbert_embedding(seq_a)
+        seq_b = self.get_sbert_embedding(seq_b)
+      self.seq_a_emb = seq_a
+      self.seq_b_emb = seq_b
+      raw_sim_matrix = self.get_embedding_sim(seq_a, seq_b)
+      
+    return raw_sim_matrix
+
+  def get_tf_idf_sim(self, seq_a, seq_b):
+    vectorizer = TfidfVectorizer(stop_words = {'english'})
+    all_tokens = list(copy.deepcopy(seq_a))
+    all_tokens.extend(list(seq_b))
+    vectorizer = vectorizer.fit(all_tokens)
+    
+    tf_idf_A = vectorizer.transform(seq_a).todense()
+    tf_idf_B = vectorizer.transform(seq_b).todense()
+    
+    ret = util.cos_sim(tf_idf_A, tf_idf_B)
+    ret_np = ret.detach().cpu().numpy()  
+    return ret_np
 
   def get_jaccard_sim(self, seq_a, seq_b):
     sim_matrix = np.zeros((len(seq_a), len(seq_b)))
@@ -475,6 +487,7 @@ class Preprocessor:
         )
     return sim_matrix
 
+  #not fixed functions  
   def _segment_into_seq(self, tokens, unit_size):
     if unit_size == 'word':
       words = []

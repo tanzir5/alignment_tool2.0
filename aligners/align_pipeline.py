@@ -104,7 +104,7 @@ def align_sequences(
   aligner.compute_smith_waterman(no_gap)
   alignments, _, _ = aligner.create_alignments()
   ret = {}
-  if isinstance(seq1,str):
+  if isinstance(seq1,str) and unit1 != 'embedding_path':
     aligned_segments, removed_seq1, removed_seq2 = prepare_all_with_indices(
       alignments, 
       preprocessor.indices_a, 
