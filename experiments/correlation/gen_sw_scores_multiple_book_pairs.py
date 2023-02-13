@@ -1,7 +1,7 @@
 import glob
 from tqdm import tqdm
 import pandas as pd
-from align_pipeline import align_sequences
+from aligners.align_pipeline import align_sequences
 import os
 import numpy as np
 import multiprocessing as mp
@@ -12,8 +12,10 @@ def process_two_books(
   #i, j = args[0], args[1]
   book1 = str(book1)
   book2 = str(book2)
-  seq1 = np.load(emb1_path + '/' + book1 + '.npy')
-  seq2 = np.load(emb2_path + '/' + book2 + '.npy')
+  #seq1 = np.load(emb1_path + '/' + book1 + '.npy')
+  #seq2 = np.load(emb2_path + '/' + book2 + '.npy')
+  seq1 = np.random.rand(10, 12)
+  seq2 = np.random.rand(5, 12)
   print("size and books:")
   print(seq1.shape, seq2.shape)
   print(book1, book2)
@@ -23,9 +25,10 @@ def process_two_books(
     unit1='embedding', 
     unit2='embedding', 
     sim=sim_func, 
-    z_thresh=z_thresh)
+    z_thresh=z_thresh,
+    return_aligner=True)['aligner']
   dp = aligner.dp
-  save_path = save_path_root + "_" + book1+"_"+book2 + ".npy"
+  save_path = save_path_root + "/" + book1+"_"+book2 + ".npy"
   np.save(save_path, dp)
 
 def process_books(
@@ -54,19 +57,19 @@ def process_books(
 if __name__ ==  '__main__':
   z_thresh = 2
   sim_func = 'sbert'
-  emb_path = 'data/positive_pairs/embs/'
+  emb_path = 'data/positive_pairs/embs'
   
   df = pd.read_csv('data/positive_pairs/positive_pairs_dataset.csv')
   id1 = df['Id1'].to_list()
   id2 = df['Id2'].to_list()
-  save_path_root = 'data/positive_pairs/dp_matrices/'
+  save_path_root = 'data/positive_pairs/dp_matrices'
   process_books(
     id1, id2, sim_func, z_thresh, emb_path, emb_path, save_path_root)
   
   df = pd.read_csv('data/negative_pairs/negative_pairs_dataset.csv')
   id1 = df['Id1'].to_list()
   id2 = df['Id2'].to_list()
-  save_path_root = 'data/negative_pairs/dp_matrices/'
+  save_path_root = 'data/negative_pairs/dp_matrices'
   process_books(
     id1, id2, sim_func, z_thresh, emb_path, emb_path, save_path_root)
 
