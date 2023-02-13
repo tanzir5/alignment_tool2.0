@@ -73,13 +73,23 @@ class Preprocessor:
   def __init__(
     self, 
     seq_a, 
-    seq_b,
+    seq_b=None,
     size_a='paragraph',
     size_b='paragraph',
     sim_config=None,
     clip_length=None,
     save_emb_dirs=None,
+    create_embs_only=False,
   ):
+    self.sbert = None
+    self.glove = None
+    self.bert = None
+
+    if create_embs_only:
+      self.validate_for_create_embs_only(seq_b, sim_config)
+      self.seq_a_emb = self.create_embs_only(seq_a, size_a, sim_config['func'], save_emb_dirs)
+      return
+
     if sim_config is None:
       sim_config = DEFAULT_SIM_CONFIG
     """Initializes preprocessor."""
@@ -101,9 +111,6 @@ class Preprocessor:
       seq_b, self.indices_b = self._segment(seq_b, size_b)  
 
 
-    self.sbert = None
-    self.glove = None
-    self.bert = None
     self.final_seq_a = seq_a
     self.final_seq_b = seq_b
     self.sim_config = sim_config
@@ -116,6 +123,26 @@ class Preprocessor:
     if save_emb_dirs is not None:
       self.save_embs(save_emb_dirs)
 
+  
+  #create_embs_only functions
+  def create_embs_only(self, seq_a, size_a, emb_func, save_emb_dirs):
+    if isinstance(seq_a, str):
+      seq_a = self._segment(seq_a, size_a)
+
+    if emb_func == 'bert':
+      seq_emb = self.get_bert_embedding(seq_a)
+    elif emb_func == 'glove':
+      seq_emb = self.get_glove_embedding_mean(seq_a)
+    else:
+      seq_emb = self.get_sbert_embedding(seq_a)
+
+    if save_emb_dirs is not None:
+      if isinstance(save_emb_dirs, str):
+        save_path = save_emb_dirs
+      else:
+        save_path = save_emb_dirs[0]
+      np.save(save_path, seq_emb)
+    return seq_emb
   #init functions
   def _init_config(self, sim_config):
     if 'threshold' not in sim_config:
@@ -139,6 +166,18 @@ class Preprocessor:
     }
 
   #check everything's ok functions
+  def validate_for_create_embs_only(self, seq_b, sim_config):
+    try:
+      assert(seq_b is None)
+    except:
+      print("seq_b should be none if create_embs_only is true")
+    try:
+      assert(sim_config['func'] in ['sbert', 'glove', 'bert'])
+    except:
+      print("sim_config['func'] must be one of",
+        "['sbert', 'glove', 'bert'] when create_embs_only is True")
+      exit(0)
+
   def _check_size_compatibility(self, size_a, size_b):
     is_compatible = True
     if size_a == 'embedding_path':
