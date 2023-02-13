@@ -14,10 +14,15 @@ def process_two_books(
   book1 = str(book1)
   book2 = str(book2)
   save_path = save_path_root + "/" + book1+"_"+book2 + ".npy"
-  if os.path.exists(save_path):
+  emb1_path = emb1_path + '/' + book1 + '.npy'
+  emb2_path = emb2_path + '/' + book2 + '.npy'
+  if (os.path.exists(save_path) or 
+    os.path.exists(emb1_path) == False or 
+    os.path.exists(emb2_path) == False
+  ):
     return
-  seq1 = np.load(emb1_path + '/' + book1 + '.npy')
-  seq2 = np.load(emb2_path + '/' + book2 + '.npy')
+  seq1 = np.load(emb1_path)
+  seq2 = np.load(emb2_path)
   print("size and books:")
   print(seq1.shape, seq2.shape)
   print(book1, book2)
