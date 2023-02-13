@@ -12,10 +12,8 @@ def process_two_books(
   #i, j = args[0], args[1]
   book1 = str(book1)
   book2 = str(book2)
-  #seq1 = np.load(emb1_path + '/' + book1 + '.npy')
-  #seq2 = np.load(emb2_path + '/' + book2 + '.npy')
-  seq1 = np.random.rand(10, 12)
-  seq2 = np.random.rand(5, 12)
+  seq1 = np.load(emb1_path + '/' + book1 + '.npy')
+  seq2 = np.load(emb2_path + '/' + book2 + '.npy')
   print("size and books:")
   print(seq1.shape, seq2.shape)
   print(book1, book2)
