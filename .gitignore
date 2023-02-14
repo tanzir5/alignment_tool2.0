@@ -1,4 +1,8 @@
 data
 .DS_Store
 aligners/.vector_cache/
-
+aligners/__pycache__/
+aligners/alignment.egg-info/
+experiments/.DS_Store
+align_env
+alignment.egg-info/
