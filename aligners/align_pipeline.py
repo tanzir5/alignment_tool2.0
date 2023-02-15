@@ -79,7 +79,7 @@ def align_sequences(
   clip=None,
   sim_config=None,
   ignore=None,
-  no_gap=False,
+  no_gap=True,
   save_emb_dirs=None,
   return_preprocessor=False,
   return_aligner=False,
@@ -98,10 +98,14 @@ def align_sequences(
     sim_config=sim_config,
     clip_length=clip,
     save_emb_dirs=save_emb_dirs,
+    no_gap=no_gap,
   )
-
-  aligner = Aligner(preprocessor.sim_matrix, ignore)
-  aligner.compute_smith_waterman(no_gap)
+  aligner = Aligner(
+    preprocessor.sim_matrix, 
+    ignore=ignore,
+    no_gap=no_gap
+  )
+  aligner.compute_smith_waterman()
   alignments, _, _ = aligner.create_alignments()
   ret = {}
   if isinstance(seq1,str) and unit1 != 'embedding_path':

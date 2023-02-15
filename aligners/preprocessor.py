@@ -17,6 +17,7 @@ import torchtext
 import re
 import os
 
+INF = 1e9
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 nlp = spacy.load("en_core_web_sm")
 all_stopwords = nlp.Defaults.stop_words
@@ -80,6 +81,7 @@ class Preprocessor:
     clip_length=None,
     save_emb_dirs=None,
     create_embs_only=False,
+    no_gap=True,
   ):
     self.sbert = None
     self.glove = None
@@ -93,6 +95,7 @@ class Preprocessor:
     if sim_config is None:
       sim_config = DEFAULT_SIM_CONFIG
     """Initializes preprocessor."""
+    self.no_gap = no_gap
     self.unmodified_seq_a = copy.deepcopy(seq_a)
     self.unmodified_seq_b = copy.deepcopy(seq_b)
     self._check_validity(seq_a, seq_b, size_a, size_b, sim_config)
@@ -120,6 +123,9 @@ class Preprocessor:
       self.sim_matrix = self.raw_sim_matrix
     else:
       self.sim_matrix = self.normalize(self.raw_sim_matrix)
+    if self.no_gap:
+      no_gapper_modifier = lambda x: x if x >= 0 else -INF
+      self.sim_matrix = np.vectorize(no_gapper_modifier)(self.sim_matrix)
     if save_emb_dirs is not None:
       self.save_embs(save_emb_dirs)
 
