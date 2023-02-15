@@ -4,39 +4,43 @@ import numpy as np
 INF = 1e9
     
 class Aligner:
-  def __init__(self, similarity_matrix, ignore=None):
+  def __init__(self, 
+    similarity_matrix, 
+    ignore=None,
+    no_gap=True, 
+    gap_start_penalty=-0.9, 
+    gap_continue_penalty=-0.5, 
+    use_global_prior=False
+  ):
     if ignore is None:
       ignore = [set(), set()]
     self.similarity_matrix = similarity_matrix
     self.ignore = ignore
+    self.no_gap = no_gap
+    self.gap_start_penalty = gap_start_penalty
+    self.gap_continue_penalty = gap_continue_penalty
+    self.use_global_prior = use_global_prior
     self.sw_computed = False
 
+    if self.no_gap:
+      self.gap_start_penalty = -INF
+      self.gap_continue_penalty = -INF
+  
   def global_prior(self, b, m):
     mu_b = math.ceil(b * self.N_M/self.N_B)
     exponent = (m - mu_b) * (m - mu_b) / (2*self.N_M*self.N_M)
     exponent *= -1
     return math.exp(exponent)*0.0125
 
-  def compute_smith_waterman(
-    self, 
-    no_gap = False, 
-    gap_start_penalty = -0.9, 
-    gap_continue_penalty = -0.5, 
-    use_global_prior = False
-  ):
-    if no_gap:
-      gap_start_penalty = -INF
-      gap_continue_penalty = -INF
+  def compute_smith_waterman(self):
     self.dp = np.zeros(
       (self.similarity_matrix.shape[0]+1, 
        self.similarity_matrix.shape[1]+1, 2, 2)
     )
-    if use_global_prior:
+    if self.use_global_prior:
       self.N_M = self.dp.shape[0]
       self.N_B = self.dp.shape[1]
     self.parent = {}
-    self.gap_start_penalty = gap_start_penalty
-    self.gap_continue_penalty = gap_continue_penalty
     n = self.similarity_matrix.shape[0]
     m = self.similarity_matrix.shape[1]
     
@@ -71,30 +75,32 @@ class Aligner:
               if gc_1 == 1:
                 #continue gap for first text
                 current_value = (self.dp[i-1][j][gc_1][gc_2] + 
-                                gap_continue_penalty)
+                                self.gap_continue_penalty)
                 if best < current_value:
                   best = current_value
                   self.parent[(i, j, gc_1, gc_2)] = (i-1, j, gc_1, gc_2)
               else:
                 #start new gap for first text
-                current_value = self.dp[i-1][j][1][gc_2] + gap_start_penalty
+                current_value = (self.dp[i-1][j][1][gc_2] + 
+                                 self.gap_start_penalty)
                 if best < current_value:
                   best = current_value
                   self.parent[(i, j, gc_1, gc_2)] = (i-1, j, 1, gc_2)
               if gc_2 == 1:
                 #continue gap for second text
                 current_value = (self.dp[i][j-1][gc_1][gc_2] + 
-                                gap_continue_penalty)
+                                 self.gap_continue_penalty)
                 if best < current_value:
                   best = current_value
                   self.parent[(i, j, gc_1, gc_2)] = (i, j-1, gc_1, gc_2)
               else:
                 #start new gap for second text
-                parent_value = self.dp[i][j-1][gc_1][1] + gap_continue_penalty
-                if best < parent_value:
-                  best = parent_value
-                  self.parent[(i, j, gc_1, gc_2)] = (i, j-1, gc_1, gc_2)
-              if use_global_prior:
+                current_value = (self.dp[i][j-1][gc_1][1] + 
+                                 self.gap_start_penalty)
+                if best < current_value:
+                  best = current_value
+                  self.parent[(i, j, gc_1, gc_2)] = (i, j-1, gc_1, 1)
+              if self.use_global_prior:
                 # 1 <= gb <= 2 always true
                 gb = self.global_prior(j, i) # if positive sim, higher is better
               else:
