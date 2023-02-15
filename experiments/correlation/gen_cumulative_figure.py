@@ -64,14 +64,16 @@ plt.show()
 
 
 '''
-For related pairs,
-Discrete combined_P_Value(pvalue=9.9999990000001e-08, std=9.9999990000001e-08)
-continuous Combined_P_Value(statistic=415.59727959218685, pvalue=7.288915253647748e-93)
-mean = 0.09773091109259377 
-median = 0.002850140147225905
-For unrelated pairs,
-Discrete Combined_P_Value(pvalue=1.599999840000016e-06, std=3.8729800541708124e-07)
-Continuous Combined_P_Value(statistic=61.6886421873683, pvalue=1.4644438017404043e-06)
-mean = 0.4597758698430436 
-median = 0.4062815613729491
+Related continuous Combined_P_Value  (pvalue=7.29e-93, statistic=415.59727959218685)
+Unrelated continuous Combined_P_Value(pvalue=1.46e-06, statistic=61.6886421873683)
+
+
+Related discrete combined_P_Value  (pvalue=9.9999990000001e-08, std=9.9999990000001e-08)
+Unrelated discrete Combined_P_Value(pvalue=1.599999840000016e-06, std=3.8729800541708124e-07)
+
+related mean   = 0.09873 
+unrelated dmean   = 0.45978 
+
+related median = 0.00285
+unrelated median = 0.40628
 '''
