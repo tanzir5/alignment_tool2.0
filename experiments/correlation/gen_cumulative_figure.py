@@ -27,7 +27,7 @@ def create_plot_correlation_from_pickle(root_path):
   #print(stats.combine_pvalues(pvalues, method='mudholkar_george'))
   x = np.sort(corrs)
   y = np.arange(1, len(corrs)+1)
-  return x, y
+  return x, y, corrs
 
 def create_correlation_pickle(root_path):
   ret = []
@@ -53,13 +53,17 @@ def create_correlation_pickle(root_path):
     ret.append((x,y))
   pickle.dump(ret, open(root_path+'temp.p', "wb"))
 
-pos_x, pos_y = create_plot_correlation_from_pickle('data/positive_pairs/')
-neg_x, neg_y = create_plot_correlation_from_pickle('data/negative_pairs/')
+
+pos_x, pos_y, pos_corrs = create_plot_correlation_from_pickle('data/positive_pairs/')
+neg_x, neg_y, neg_corrs = create_plot_correlation_from_pickle('data/negative_pairs/')
+
 plt.xlabel('Correlation')
 plt.ylabel('Cumulative frequency') 
 plt.plot(pos_x, pos_y, marker=".", label="related")
 plt.plot(neg_x, neg_y, marker=".", label="unrelated")
 plt.legend(loc="upper left")
+ks_result = stats.kstest(rvs=pos_corrs, cdf=neg_corrs)
+print("ks test results:", ks_result)
 plt.show()
 
 
@@ -76,4 +80,6 @@ unrelated dmean   = 0.45978
 
 related median = 0.00285
 unrelated median = 0.40628
+
+ks test results: KstestResult(statistic=0.5490196078431373, pvalue=2.0805968126774696e-07, statistic_location=0.3865555914446532, statistic_sign=-1)
 '''

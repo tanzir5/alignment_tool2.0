@@ -6,3 +6,4 @@ aligners/alignment.egg-info/
 experiments/.DS_Store
 align_env
 alignment.egg-info/
+.vector_cache/
