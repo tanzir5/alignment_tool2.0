@@ -15,6 +15,8 @@ import xml.dom.minidom
 import codecs
 from aligners.align_pipeline import align_sequences
 from tqdm import tqdm
+import multiprocessing as mp
+
 # Const
 # =====
 
@@ -205,23 +207,49 @@ class Baseline:
 # Main
 # ====
 
+def single_process(susp, src, outdir):
+  baseline = Baseline(susp, src, outdir)
+  baseline.process()
+
+def parallel_process(lines):
+  pool = mp.Pool(mp.cpu_count())
+  jobs = []
+  for line in lines:
+    susp, src = line.split()
+    job = pool.apply_async(
+      single_process, 
+      (os.path.join(suspdir, susp), os.path.join(srcdir, src), outdir)
+    )
+    jobs.append(job)
+    
+  print("length of jobs", len(jobs))
+  for i, job in tqdm(enumerate(jobs)): 
+    job.get()
+    print(i, "is done")
+
+  pool.close()
+  pool.join()
+  
 if __name__ == "__main__":
     """ Process the commandline arguments. We expect three arguments: The path
     pointing to the pairs file and the paths pointing to the directories where
     the actual source and suspicious documents are located.
     """
-    if len(sys.argv) == 5:
+    if len(sys.argv) == 6:
         srcdir = sys.argv[2]
         suspdir = sys.argv[3]
         outdir = sys.argv[4]
         if outdir[-1] != "/":
             outdir+="/"
         lines = open(sys.argv[1], 'r').readlines()
-        for line in tqdm(lines):
+        if sys.argv[5] == 'single':
+          for line in tqdm(lines):
             susp, src = line.split()
-            baseline = Baseline(os.path.join(suspdir, susp),
-                                os.path.join(srcdir, src), outdir)
-            baseline.process()
+            single_process(os.path.join(suspdir, susp),
+                           os.path.join(srcdir, src), outdir)
+        else:
+          parallel_process(lines)
+
     else:
         print('\n'.join(["Unexpected number of commandline arguments.",
-                         "Usage: ./pan12-plagiarism-text-alignment-example.py {pairs} {src-dir} {susp-dir} {out-dir}"]))
+                         "Usage: ./pan12-plagiarism-text-alignment-example.py {pairs} {src-dir} {susp-dir} {out-dir} {paralllel/single}"]))
