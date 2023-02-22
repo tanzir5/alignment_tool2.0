@@ -82,11 +82,13 @@ class Preprocessor:
     save_emb_dirs=None,
     create_embs_only=False,
     no_gap=True,
+    double_break_for_paragraphs=True,
   ):
     self.sbert = None
     self.glove = None
     self.bert = None
 
+    self.double_break_for_paragraphs = double_break_for_paragraphs
     if create_embs_only:
       self.validate_for_create_embs_only(seq_b, sim_config)
       self.seq_a_emb = self.create_embs_only(seq_a, size_a, sim_config['func'], save_emb_dirs)
@@ -283,9 +285,13 @@ class Preprocessor:
       indices.append({'st':sent.start_char, 'end':sent.end_char-1})
     return sentences, indices
 
-  def _segment_into_paragraph(self, text):
+  def _segment_into_paragraph(self, text, double_blank=True):
+    if double_blank == True:
+      pattern = '\n\n\s*'
+    else:
+      pattern = '\n\s*'
     indices = [{'break_st':m.start(), 'break_end':m.end()-1} 
-                for m in re.finditer('\n\n\s*', text)]
+                  for m in re.finditer(pattern, text)]
     paragraphs = []
     for i in range(len(indices)):
       if i == 0:
@@ -314,7 +320,9 @@ class Preprocessor:
     elif size == "sentence":
       return self._segment_into_sentence(text)
     elif size == 'paragraph':
-      return self._segment_into_paragraph(text)
+      return self._segment_into_paragraph(
+        text, self.double_break_for_paragraphs
+      )
     else:
       assert(False)
 
