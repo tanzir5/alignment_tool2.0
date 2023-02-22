@@ -1,4 +1,4 @@
-python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_04-translation-obfuscation/pairs data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/ data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/susp/ data/experiments/pan13/outputs/test_word_4/
+python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_05-summary-obfuscation/pairs data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/ data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/susp/ data/experiments/pan13/outputs/z_exp_summary/ parallel
 
 
-python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_04-translation-obfuscation/  -d data/experiments/pan13/outputs/test_word_4/
+python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_05-summary-obfuscation/  -d data/experiments/pan13/outputs/z_exp_random/58

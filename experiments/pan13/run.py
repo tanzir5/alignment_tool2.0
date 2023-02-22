@@ -99,8 +99,17 @@ pipeline your plagiarism detector can follow.
 Replace the single steps with your implementation to get started.
 """
 
-class Baseline:
-    def __init__(self, susp, src, outdir):
+class PlagDetector:
+    def __init__(
+      self, 
+      susp, 
+      src, 
+      outdir,
+      unit1='sentence',
+      unit2='sentence',
+      sim='sbert', 
+      z_thresh=4,
+      ):
         self.susp = susp
         self.src = src
         self.susp_file = os.path.split(susp)[1]
@@ -110,6 +119,10 @@ class Baseline:
         self.output = self.susp_id + '-' + self.src_id + '.xml'
         self.detections = None
         self.outdir=outdir
+        self.unit1 = unit1
+        self.unit2 = unit2
+        self.sim = sim
+        self.z_thresh = z_thresh
 
     def read_files(self):
         """ Preprocess the suspicious and source document. """
@@ -126,11 +139,11 @@ class Baseline:
       #print("lens", len(self.src_text.split()), len(self.susp_text.split()))
       ret = align_sequences(
           self.src_text, 
-          self.susp_text, 
-          sim='sbert',
-          z_thresh=4, 
-          unit1='sentence',
-          unit2='sentence',
+          self.susp_text,
+          unit1=self.unit1, 
+          unit2=self.unit2,
+          sim=self.sim,
+          z_thresh=self.z_thresh, 
           return_aligner=True,
       )
       print("lens")
@@ -207,18 +220,33 @@ class Baseline:
 # Main
 # ====
 
-def single_process(susp, src, outdir):
-  baseline = Baseline(susp, src, outdir)
-  baseline.process()
+def single_process(
+  susp, 
+  src, 
+  outdir,
+  z_thresh, 
+  unit1='sentence',  
+  unit2='sentence',
+  sim='sbert', 
+):
+  plag_detector = PlagDetector(susp, src, outdir, z_thresh=z_thresh)
+  plag_detector.process()
 
-def parallel_process(lines):
+def parallel_process(
+  lines,
+  outdir, 
+  unit1='sentence',  
+  unit2='sentence',
+  sim='sbert', 
+  z_thresh=4,
+):
   pool = mp.Pool(mp.cpu_count())
   jobs = []
   for line in lines:
     susp, src = line.split()
     job = pool.apply_async(
       single_process, 
-      (os.path.join(suspdir, susp), os.path.join(srcdir, src), outdir)
+      (os.path.join(suspdir, susp), os.path.join(srcdir, src), outdir, z_thresh)
     )
     jobs.append(job)
     
@@ -242,13 +270,18 @@ if __name__ == "__main__":
         if outdir[-1] != "/":
             outdir+="/"
         lines = open(sys.argv[1], 'r').readlines()
-        if sys.argv[5] == 'single':
-          for line in tqdm(lines):
-            susp, src = line.split()
-            single_process(os.path.join(suspdir, susp),
-                           os.path.join(srcdir, src), outdir)
-        else:
-          parallel_process(lines)
+        for z in range(0, 12, 1):
+          if sys.argv[5] == 'single':
+            pass
+            '''for line in tqdm(lines):
+              susp, src = line.split()
+              single_process(os.path.join(suspdir, susp),
+                             os.path.join(srcdir, src), outdir)'''
+          else:
+            final_outdir = os.path.join(outdir, str(z)) + "/"
+            if os.path.exists(final_outdir) is False:
+              os.mkdir(final_outdir)
+            parallel_process(lines, final_outdir, z_thresh=z)
 
     else:
         print('\n'.join(["Unexpected number of commandline arguments.",
