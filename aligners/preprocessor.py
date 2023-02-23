@@ -293,21 +293,31 @@ class Preprocessor:
     indices = [{'break_st':m.start(), 'break_end':m.end()-1} 
                   for m in re.finditer(pattern, text)]
     paragraphs = []
-    for i in range(len(indices)):
-      if i == 0:
-        indices[i]['text_st'] = 0
-      else:
-        indices[i]['text_st'] = indices[i-1]['break_end']+1
-      indices[i]['text_end'] = indices[i]['break_st']-1
-      paragraphs.append(text[indices[i]['text_st']:indices[i]['break_end']+1])
-    if indices[-1]['break_end'] != len(text)-1:
-      indices.append({
-        'text_st':indices[-1]['break_end']+1,
-        'text_end':len(text)-1,
-        'break_st':len(text)-1,
-        'break_end':len(text)-1
-        })
-      paragraphs.append(text[indices[-1]['text_st']:indices[-1]['break_end']+1])
+    if len(indices) == 0:
+      indices = [{
+      'text_st': 0,
+      'text_end': len(text)-1,
+      'break_st': len(text)-1, 
+      'break_end': len(text)-1,
+      }]
+      paragraphs.append(text)
+    else:
+      for i in range(len(indices)):
+        if i == 0:
+          indices[i]['text_st'] = 0
+        else:
+          indices[i]['text_st'] = indices[i-1]['break_end']+1
+        indices[i]['text_end'] = indices[i]['break_st']-1
+        paragraphs.append(text[indices[i]['text_st']:indices[i]['break_end']+1])
+      if indices[-1]['break_end'] != len(text)-1:
+        indices.append({
+          'text_st':indices[-1]['break_end']+1,
+          'text_end':len(text)-1,
+          'break_st':len(text)-1,
+          'break_end':len(text)-1
+          })
+        paragraphs.append(text[indices[-1]['text_st']:indices[-1]['break_end']+1])
+    
     for i in range(len(indices)):
       indices[i] = {'st':indices[i]['text_st'], 'end':indices[i]['text_end']}
     return paragraphs, indices
