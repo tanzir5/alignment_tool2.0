@@ -16,6 +16,7 @@ import torch
 import torchtext
 import re
 import os
+import json
 
 INF = 1e9
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -89,11 +90,22 @@ class Preprocessor:
     self.bert = None
 
     self.double_break_for_paragraphs = double_break_for_paragraphs
+    self.indices_a = None
+    self.indices_b = None
     if create_embs_only:
       self.validate_for_create_embs_only(seq_b, sim_config)
-      self.seq_a_emb = self.create_embs_only(seq_a, size_a, sim_config['func'], save_emb_dirs)
+      if isinstance(seq_a, str) and size_a != 'embedding_path':
+        seq_a, self.indices_a = self._segment(seq_a, size_a)
+      
+      self.seq_a_emb = self.create_embs_only(seq_a, size_a, sim_config['func'])
+      self.save_embs(save_emb_dirs)
       return
-
+    
+    try:  
+      assert(seq_b is not None)
+    except:
+      print("seq_b must not be none when create_embs_only is False")
+      exit(0)
     if sim_config is None:
       sim_config = DEFAULT_SIM_CONFIG
     """Initializes preprocessor."""
@@ -128,12 +140,12 @@ class Preprocessor:
     if self.no_gap:
       no_gapper_modifier = lambda x: x if x >= 0 else -INF
       self.sim_matrix = np.vectorize(no_gapper_modifier)(self.sim_matrix)
-    if save_emb_dirs is not None:
-      self.save_embs(save_emb_dirs)
+    
+    self.save_embs(save_emb_dirs)
 
   
   #create_embs_only functions
-  def create_embs_only(self, seq_a, size_a, emb_func, save_emb_dirs):
+  def create_embs_only(self, seq_a, size_a, emb_func):
     if isinstance(seq_a, str):
       seq_a = self._segment(seq_a, size_a)
 
@@ -143,14 +155,8 @@ class Preprocessor:
       seq_emb = self.get_glove_embedding_mean(seq_a)
     else:
       seq_emb = self.get_sbert_embedding(seq_a)
-
-    if save_emb_dirs is not None:
-      if isinstance(save_emb_dirs, str):
-        save_path = save_emb_dirs
-      else:
-        save_path = save_emb_dirs[0]
-      np.save(save_path, seq_emb)
     return seq_emb
+
   #init functions
   def _init_config(self, sim_config):
     if 'threshold' not in sim_config:
@@ -381,17 +387,29 @@ class Preprocessor:
 
 
   #embedding utility functions
+  def save_embs_in_dict(self, emb, indices, save_path):
+    tmp_dict = {'embedding': emb.tolist(), 'indices':indices}
+    with open(save_path, "w") as fp:
+      json.dump(tmp_dict, fp)  # encode dict into JSON
+  
   def save_embs(self, save_emb_dirs):
+    if save_emb_dirs is None:
+      return
     try:
-      assert(hasattr(self, 'seq_a_emb') and hasattr(self, 'seq_b_emb'))
+      assert(hasattr(self, 'seq_a_emb'))
     except:
       print("save_emb_dirs is passed but the code is not saving embeddings!")
       exit(0)
+    
     try:
-      np.save(save_emb_dirs[0], self.seq_a_emb)
-      np.save(save_emb_dirs[1], self.seq_b_emb)
-    except:
-      print("save_emb_dirs is not a list of two strings(paths)")
+      self.save_embs_in_dict(self.seq_a_emb, self.indices_a, save_emb_dirs[0])
+      if len(save_emb_dirs) > 1:
+        self.save_embs_in_dict(self.seq_b_emb, self.indices_b, save_emb_dirs[1])
+    except Exception as exception:
+      print(exception)
+      print("error in saving embeddings.Possible reasons:")
+      print("1. save_emb_dirs is not a list of strings")
+      print("2. the object has not created required number of embeddings.")
       exit(0)
   
   def load_embedding(self, path):
