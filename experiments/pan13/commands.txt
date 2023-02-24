@@ -1,4 +1,20 @@
-python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_05-summary-obfuscation/pairs data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/ data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/susp/ data/experiments/pan13/outputs/z_exp_summary/ parallel
+'''
+Things to do: 
+-1. Write code for saving string indices along with embeddings. 
+0. Create embeddings of all data.
+1. run jaccard and sbert on all small datasets of different strategies 
+separately for hyperparameter search. 
+2. Find best hyperparameter set for each strategy for both jaccard and sbert
+3. Find overall best hyperparameter for both jaccard and sbert
+4. run jaccard (and sbert) best hyperparameter set for each strategy for whole train set 
+of each respective strategy 
+5. run jaccard (and sbert) best hyperparameter set for whole train set
+6. See if the small experiment results correlate with large experiment results. 
+7. Do 4 and 5 for test set. 
+8. See if we can use 5 directly or if we have to opt for 4 with explanations.
+'''
+
+python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_03-random-obfuscation/pairs data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/ data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/susp/ data/experiments/pan13/outputs/jaccard_03_sent/ parallel
 
 
-python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_05-summary-obfuscation/  -d data/experiments/pan13/outputs/z_exp_random/58
+python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_03-random-obfuscation/  -d data/experiments/pan13/outputs/jaccard_03_sent/-1

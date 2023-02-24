@@ -109,6 +109,7 @@ class PlagDetector:
       unit2='sentence',
       sim='sbert', 
       z_thresh=4,
+      double_break_for_paragraphs=True,
       ):
         self.susp = susp
         self.src = src
@@ -123,6 +124,7 @@ class PlagDetector:
         self.unit2 = unit2
         self.sim = sim
         self.z_thresh = z_thresh
+        self.double_break_for_paragraphs = double_break_for_paragraphs
 
     def read_files(self):
         """ Preprocess the suspicious and source document. """
@@ -137,13 +139,16 @@ class PlagDetector:
 
     def detect(self):
       #print("lens", len(self.src_text.split()), len(self.susp_text.split()))
+      #print("double:",self.double_break_for_paragraphs)
+      #print("sim:", self.sim)
       ret = align_sequences(
           self.src_text, 
           self.susp_text,
           unit1=self.unit1, 
           unit2=self.unit2,
           sim=self.sim,
-          z_thresh=self.z_thresh, 
+          z_thresh=self.z_thresh,
+          double_break_for_paragraphs=self.double_break_for_paragraphs, 
           return_aligner=True,
       )
       print("lens")
@@ -224,13 +229,26 @@ def single_process(
   susp, 
   src, 
   outdir,
-  z_thresh, 
   unit1='sentence',  
   unit2='sentence',
-  sim='sbert', 
+  sim='sbert',
+  z_thresh=4, 
+  double_break_for_paragraphs=True, 
 ):
-  plag_detector = PlagDetector(susp, src, outdir, z_thresh=z_thresh)
+  plag_detector = PlagDetector(
+    susp, 
+    src, 
+    outdir, 
+    unit1=unit1,
+    unit2=unit2,
+    sim=sim,
+    z_thresh=z_thresh,
+    double_break_for_paragraphs=double_break_for_paragraphs
+  )
   plag_detector.process()
+
+def remove_txt_add_json(path):
+  return path.split('.')[0] + '.json'
 
 def parallel_process(
   lines,
@@ -239,22 +257,34 @@ def parallel_process(
   unit2='sentence',
   sim='sbert', 
   z_thresh=4,
+  double_break_for_paragraphs=True,
 ):
   pool = mp.Pool(mp.cpu_count())
   jobs = []
   for line in lines:
     susp, src = line.split()
+    
+    if unit1 == 'embedding_path':
+      susp = remove_txt_add_json(susp)
+      src = remove_txt_add_json(src)
+
     job = pool.apply_async(
-      single_process, 
-      (os.path.join(suspdir, susp), os.path.join(srcdir, src), outdir, z_thresh)
+      single_process, (
+        os.path.join(suspdir, susp), 
+        os.path.join(srcdir, src), 
+        outdir, 
+        unit1,
+        unit2,
+        sim,
+        z_thresh,
+        double_break_for_paragraphs
+      )
     )
     jobs.append(job)
     
-  print("length of jobs", len(jobs))
-  for i, job in tqdm(enumerate(jobs)): 
+  for i, job in enumerate(jobs): 
     job.get()
-    print(i, "is done")
-
+    
   pool.close()
   pool.join()
   
@@ -267,10 +297,12 @@ if __name__ == "__main__":
         srcdir = sys.argv[2]
         suspdir = sys.argv[3]
         outdir = sys.argv[4]
+        if os.path.exists(outdir) is False:
+          os.mkdir(outdir)
         if outdir[-1] != "/":
             outdir+="/"
         lines = open(sys.argv[1], 'r').readlines()
-        for z in range(0, 12, 1):
+        for z in tqdm(range(-2, 31, 1)):
           if sys.argv[5] == 'single':
             pass
             '''for line in tqdm(lines):
@@ -281,8 +313,15 @@ if __name__ == "__main__":
             final_outdir = os.path.join(outdir, str(z)) + "/"
             if os.path.exists(final_outdir) is False:
               os.mkdir(final_outdir)
-            parallel_process(lines, final_outdir, z_thresh=z)
-
+            parallel_process(
+              lines, 
+              final_outdir, 
+              unit1='sentence', 
+              unit2='sentence', 
+              z_thresh=z,
+              sim='jaccard',
+              double_break_for_paragraphs=False
+            )
     else:
         print('\n'.join(["Unexpected number of commandline arguments.",
                          "Usage: ./pan12-plagiarism-text-alignment-example.py {pairs} {src-dir} {susp-dir} {out-dir} {paralllel/single}"]))
