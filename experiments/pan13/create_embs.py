@@ -19,15 +19,15 @@ def create_embs_for_all(input_dir, unit, save_dir):
     )
 
 
-input_dir = "data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/"
-save_dir = "data/experiments/pan13/embeddings/src/sentences/"
-create_embs_for_all(input_dir, unit='sentence', save_dir=save_dir)
+#input_dir = "data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/"
+#save_dir = "data/experiments/pan13/embeddings/src/sentences/"
+#create_embs_for_all(input_dir, unit='sentence', save_dir=save_dir)
 
-'''
 input_dir = "data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/"
 save_dir = "data/experiments/pan13/embeddings/src/paragraphs/"
 create_embs_for_all(input_dir, unit='paragraph', save_dir=save_dir)
 
+'''
 input_dir = "data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/susp/"
 save_dir = "data/experiments/pan13/embeddings/susp/sentences/"
 create_embs_for_all(input_dir, unit='sentence', save_dir=save_dir)
@@ -37,6 +37,3 @@ input_dir = "data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01
 save_dir = "data/experiments/pan13/embeddings/susp/paragraphs/"
 create_embs_for_all(input_dir, unit='paragraph', save_dir=save_dir)
 '''
-
-#path = "data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/susp/"
-#create_embs_for_all(path)

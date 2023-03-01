@@ -113,8 +113,8 @@ class PlagDetector:
       ):
         self.susp = susp
         self.src = src
-        self.susp_file = os.path.split(susp)[1]
-        self.src_file = os.path.split(src)[1]
+        self.susp_file = self.fix_json(os.path.split(susp)[1])
+        self.src_file = self.fix_json(os.path.split(src)[1])
         self.susp_id = os.path.splitext(susp)[0]
         self.src_id = os.path.splitext(src)[0]
         self.output = self.susp_id + '-' + self.src_id + '.xml'
@@ -125,6 +125,11 @@ class PlagDetector:
         self.sim = sim
         self.z_thresh = z_thresh
         self.double_break_for_paragraphs = double_break_for_paragraphs
+
+    def fix_json(self, file_name):
+      if file_name.endswith('json'):
+        file_name = file_name[:-4] + 'txt'
+      return file_name
 
     def read_files(self):
         """ Preprocess the suspicious and source document. """
@@ -141,9 +146,15 @@ class PlagDetector:
       #print("lens", len(self.src_text.split()), len(self.susp_text.split()))
       #print("double:",self.double_break_for_paragraphs)
       #print("sim:", self.sim)
+      if self.unit1 == 'embedding_path':
+        seq1 = self.src
+        seq2 = self.susp
+      else:
+        seq1 = self.src_text
+        seq2 = self.susp_text
       ret = align_sequences(
-          self.src_text, 
-          self.susp_text,
+          seq1, 
+          seq2,
           unit1=self.unit1, 
           unit2=self.unit2,
           sim=self.sim,
@@ -163,7 +174,8 @@ class PlagDetector:
       return detections
 
     def process(self):
-        self.read_files()
+        if self.unit1 != 'embedding_path':
+          self.read_files()
         self.detections = self.detect()
         self.postprocess()
 
@@ -302,7 +314,7 @@ if __name__ == "__main__":
         if outdir[-1] != "/":
             outdir+="/"
         lines = open(sys.argv[1], 'r').readlines()
-        for z in tqdm(range(-2, 31, 1)):
+        for z in tqdm(range(-2, 12, 1)):
           if sys.argv[5] == 'single':
             pass
             '''for line in tqdm(lines):
@@ -316,10 +328,10 @@ if __name__ == "__main__":
             parallel_process(
               lines, 
               final_outdir, 
-              unit1='sentence', 
-              unit2='sentence', 
+              unit1='embedding_path', 
+              unit2='embedding_path', 
               z_thresh=z,
-              sim='jaccard',
+              sim='sbert',
               double_break_for_paragraphs=False
             )
     else:

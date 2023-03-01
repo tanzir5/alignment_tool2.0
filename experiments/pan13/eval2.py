@@ -45,7 +45,11 @@ workshops [2,3].
      Software Misuse, September 2010.
 """
 
+
 from __future__ import division
+
+
+import pandas as pd
 
 __author__ = "Martin Potthast"
 __email__ = "martin.potthast at uni-weimar dot de"
@@ -541,6 +545,18 @@ def main(micro_averaged, plag_path, plag_tag_name, det_path, det_tag_name):
 #    sys.stderr.write(' "AvgTime [s]":"' + str('%.5f' % avg_time) + '"}');
 
 #    shutil.rmtree('det');
-
+    f1 = (2 * prec * rec) / max(prec + rec, 1e-9)
+    plag = round(plag, 5)
+    rec = round(rec, 5)
+    prec = round(prec, 5)
+    f1 = round(f1, 5)
+    gran = round(gran, 5)
+    if det_path.endswith("/"):
+      det_path = det_path[:-1]
+    head_path, z = os.path.split(det_path)
+    df_path = os.path.join(head_path, 'eval_stats.csv')
+    df = pd.DataFrame({'z': int(z), 'PlagDet': [plag], 'Recall': [rec], 'Precision':[prec], 'f1': [f1], 'Granularity': [gran]})
+    df.to_csv(df_path, mode='a', index=False, header=(os.path.exists(df_path)==False))
+    
 if __name__ == '__main__':
   main(*parse_options())
