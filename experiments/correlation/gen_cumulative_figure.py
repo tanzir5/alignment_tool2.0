@@ -62,9 +62,9 @@ plt.ylabel('Cumulative frequency')
 plt.plot(pos_x, pos_y, marker=".", label="related")
 plt.plot(neg_x, neg_y, marker=".", label="unrelated")
 plt.legend(loc="upper left")
-ks_result = stats.kstest(rvs=pos_corrs, cdf=neg_corrs)
+ks_result = stats.kstest(rvs=neg_corrs, cdf=pos_corrs)
 print("ks test results:", ks_result)
-plt.show()
+#plt.show()
 
 
 '''

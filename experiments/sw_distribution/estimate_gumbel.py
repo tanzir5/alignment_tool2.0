@@ -119,9 +119,9 @@ if __name__ == "__main__":
   #u, beta = estimate_gumbel(scores)
   u, beta = (1.2911376811296125, 0.3029363212261883)
   print("gumbel parameters", u, beta)
-  print(stats.kstest(scores, gumbel_cdf_global))
+  #print(stats.kstest(scores, gumbel_cdf_global))
   draw_gumbel_over_data(scores, u, beta)
-  draw_normal_for_data(scores)
+  #draw_normal_for_data(scores)
   #draw_kstest(scores)
   plt.show()
 
