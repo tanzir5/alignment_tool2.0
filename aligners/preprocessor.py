@@ -126,7 +126,11 @@ class Preprocessor:
     if isinstance(seq_a, str) and size_a != 'embedding_path':
       seq_a, self.indices_a = self._segment(seq_a, size_a)
       seq_b, self.indices_b = self._segment(seq_b, size_b)  
-
+    elif size_a == 'embedding_path':
+      seq_a, self.indices_a = self.load_embedding(seq_a)
+      seq_b, self.indices_b = self.load_embedding(seq_b)
+      size_a = 'embedding'
+      size_b = 'embedding'
 
     self.final_seq_a = seq_a
     self.final_seq_b = seq_b
@@ -414,8 +418,14 @@ class Preprocessor:
   
   def load_embedding(self, path):
     if os.path.exists(path):
-      embs = np.load(path)
-      return embs
+      if path.endswith('npy'):
+        embs = np.load(path)
+        indices = None
+      elif path.endswith('.json'):
+        json_obj = json.load(open(path))
+        embs = np.array(json_obj['embedding'])
+        indices = json_obj['indices']
+      return embs, indices
     else:
       raise Exception(path + " does not exist.") 
 
@@ -478,11 +488,7 @@ class Preprocessor:
 
   #similarity functions
   def get_sim_matrix(self, seq_a, seq_b, size_a, size_b):
-    if size_a == 'embedding_path':
-      seq_a = self.load_embedding(seq_a)
-      seq_b = self.load_embedding(seq_b)
-      return self.get_embedding_sim(seq_a, seq_b)  
-    elif size_a == 'character':
+    if size_a == 'character':
       return self.get_sim_matrix_char_char(seq_a, seq_b)
     elif size_a == 'word':
       return self.get_sim_matrix_word_word(seq_a, seq_b)
