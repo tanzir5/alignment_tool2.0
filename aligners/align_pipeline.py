@@ -27,7 +27,7 @@ def get_removed_segments(alignments, indices, do_seq1):
   return removed_segments  
 
 def get_alignments_with_indices(
-  alignments, indices_a, indices_b, seq_a_text, seq_b_text
+  alignments, indices_a, indices_b, seq_a_text, seq_b_text, from_embedding
 ):
   ret = []
   for alignment in alignments:
@@ -35,14 +35,16 @@ def get_alignments_with_indices(
     seq1_end = indices_a[alignment['seq1_end']]['end']
     seq2_st = indices_b[alignment['seq2_st']]['st']
     seq2_end = indices_b[alignment['seq2_end']]['end']
-    ret.append({
+    cur_dict = {
       'seq1_st':seq1_st,
       'seq1_end':seq1_end,
       'seq2_st':seq2_st,
       'seq2_end':seq2_end,
-      'text_a':seq_a_text[seq1_st:seq1_end+1],
-      'text_b':seq_b_text[seq2_st:seq2_end+1],
-      })
+    }
+    if from_embedding == False:
+      cur_dict['text_a'] = seq_a_text[seq1_st:seq1_end+1]
+      cur_dict['text_b'] = seq_b_text[seq2_st:seq2_end+1]
+    ret.append(cur_dict)
   return ret
 
 def get_segments_with_indices(segments, indices):
@@ -55,7 +57,7 @@ def get_segments_with_indices(segments, indices):
   return ret
 
 def prepare_all_with_indices(
-  alignments, indices_a, indices_b, seq_a_text, seq_b_text
+  alignments, indices_a, indices_b, seq_a_text, seq_b_text, from_embedding=False
 ):
   removed_segments_seq1 = get_removed_segments(
     alignments, indices_a, do_seq1=True)
@@ -66,7 +68,7 @@ def prepare_all_with_indices(
   removed_seq2 = get_segments_with_indices(
     removed_segments_seq2, indices_b)
   aligned_segments = get_alignments_with_indices(
-    alignments, indices_a, indices_b, seq_a_text, seq_b_text)
+    alignments, indices_a, indices_b, seq_a_text, seq_b_text, from_embedding)
   return aligned_segments, removed_seq1, removed_seq2
 
 def align_sequences(
@@ -110,19 +112,18 @@ def align_sequences(
   aligner.compute_smith_waterman()
   alignments, _, _ = aligner.create_alignments()
   ret = {}
-  if isinstance(seq1,str) and unit1 != 'embedding_path':
-    aligned_segments, removed_seq1, removed_seq2 = prepare_all_with_indices(
-      alignments, 
-      preprocessor.indices_a, 
-      preprocessor.indices_b, 
-      preprocessor.unmodified_seq_a, 
-      preprocessor.unmodified_seq_b
-    )
-    ret['alignments'] = aligned_segments
-    ret['removed_seq1'] = removed_seq1
-    ret['removed_seq2'] = removed_seq2
-  else:
-    ret = {'alignments':alignments}
+  aligned_segments, removed_seq1, removed_seq2 = prepare_all_with_indices(
+    alignments, 
+    preprocessor.indices_a, 
+    preprocessor.indices_b, 
+    preprocessor.unmodified_seq_a, 
+    preprocessor.unmodified_seq_b,
+    from_embedding=(unit1 in ['embedding', 'embedding_path'])
+  )
+  ret['alignments'] = aligned_segments
+  ret['removed_seq1'] = removed_seq1
+  ret['removed_seq2'] = removed_seq2
+  
   if return_preprocessor:
     ret['preprocessor'] = preprocessor
   if return_aligner:
