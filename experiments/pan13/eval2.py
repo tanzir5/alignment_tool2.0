@@ -546,6 +546,7 @@ def main(micro_averaged, plag_path, plag_tag_name, det_path, det_tag_name):
 
 #    shutil.rmtree('det');
     f1 = (2 * prec * rec) / max(prec + rec, 1e-9)
+    print('f1', f1)
     plag = round(plag, 5)
     rec = round(rec, 5)
     prec = round(prec, 5)

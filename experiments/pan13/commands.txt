@@ -14,9 +14,15 @@ of each respective strategy
 8. See if we can use 5 directly or if we have to opt for 4 with explanations.
 '''
 
-python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_02-no-obfuscation/pairs data/experiments/pan13/embeddings/src/sentences/ data/experiments/pan13/embeddings/susp/sentences/ data/experiments/pan13/outputs/sbert_02_sent/ parallel
+python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_05-summary-obfuscation/pairs data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/ data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/susp/ data/experiments/pan13/outputs/jaccard_05_sent/ parallel jaccard
 
 
 python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_03-random-obfuscation/  -d data/experiments/pan13/outputs/jaccard_03_sent/-1
 
-python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_05-summary-obfuscation/  -d data/experiments/pan13/outputs/sbert_05_para/2
+
+subdirectory command
+python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/check_temp/  -d data/experiments/pan13/outputs/check_jaccard/
+
+
+
+python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_02-no-obfuscation/pairs data/experiments/pan13/embeddings/src/sentences/ data/experiments/pan13/embeddings/susp/sentences/ data/experiments/pan13/outputs/sbert_02_sent/ parallel
