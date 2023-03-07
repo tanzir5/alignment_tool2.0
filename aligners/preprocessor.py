@@ -577,11 +577,7 @@ class Preprocessor:
   #not fixed functions  
   def _segment_into_seq(self, tokens, unit_size):
     if unit_size == 'word':
-      words = []
-      doc = nlp(tokens.lower())
-      for word in doc:
-        words.append(word.text)
-      return words
+      return words.split()
 
   def _get_hamming_sim_seq(self, seq_a, seq_b):
     if len(seq_a) > len(seq_b):
