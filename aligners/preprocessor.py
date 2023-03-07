@@ -524,7 +524,7 @@ class Preprocessor:
       raw_sim_matrix = self.get_jaccard_sim(seq_a, seq_b)
     elif func == 'tf_idf':
       raw_sim_matrix = self.get_tf_idf_sim(seq_a, seq_b)
-    elif func == 'hamming_sim' : 
+    elif func == 'hamming' : 
       raw_sim_matrix = self.get_hamming_sim(seq_a, seq_b)
     elif func == 'overlapping_glove_sim' : 
       raw_sim_matrix = self.get_jaccard_glove_nn(seq_a, seq_b)
