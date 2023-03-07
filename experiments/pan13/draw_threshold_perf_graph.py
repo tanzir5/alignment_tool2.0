@@ -17,8 +17,8 @@ for sim in ["jaccard", "sbert"]:
     else:
       df_path = root_dir + "/" + sim + "_0" + str(i) + "_sent/" + "eval_stats.csv"
     df = pd.read_csv(df_path)
-    print(np.max(df['f1'].tolist()))
-    sns.lineplot(ax=ax, data=df, x="z", y="f1")
+    print(np.max(df['f1'].tolist()), np.argmax(df['f1'].tolist()), df['z'].iloc[np.argmax(df['f1'].tolist())])
+    #sns.lineplot(ax=ax, data=df, x="z", y="f1")
     for j in range(len(df)):
       z = df['z'].iloc[j]
       f1 = df['f1'].iloc[j]
@@ -26,9 +26,9 @@ for sim in ["jaccard", "sbert"]:
         avg_f1[z] = 0
       avg_f1[z] += f1/4
 
-  #sns.lineplot(x = list(avg_f1.keys()), y = list(avg_f1.values()))
+  sns.lineplot(x = list(avg_f1.keys()), y = list(avg_f1.values()))
 
-  ax.legend(handles=ax.lines, labels=[str(i) for i in range(2, 6)], loc='upper left')
+  #ax.legend(handles=ax.lines, labels=[str(i) for i in range(2, 6)], loc='upper left')
   plt.show()
   plt.close()
 

@@ -162,15 +162,15 @@ class PlagDetector:
           double_break_for_paragraphs=self.double_break_for_paragraphs, 
           return_aligner=True,
       )
-      print("lens")
-      print(ret['aligner'].dp.shape)
+      #print("lens")
+      #print(ret['aligner'].dp.shape)
       detections = []
       for alignment in ret['alignments']:
         detections.append((
           (alignment['seq1_st'], alignment['seq1_end']),
           (alignment['seq2_st'], alignment['seq2_end'])
         ))
-      print(len(detections))
+      #print(len(detections))
       return detections
 
     def process(self):
@@ -305,49 +305,51 @@ if __name__ == "__main__":
     pointing to the pairs file and the paths pointing to the directories where
     the actual source and suspicious documents are located.
     """
-    if len(sys.argv) == 7:
+    if len(sys.argv) == 8:
         srcdir = sys.argv[2]
         suspdir = sys.argv[3]
         outdir = sys.argv[4]
         sim = sys.argv[6]
+        z = int(sys.argv[7])
+        
         if os.path.exists(outdir) is False:
           os.mkdir(outdir)
         if outdir[-1] != "/":
             outdir+="/"
         lines = open(sys.argv[1], 'r').readlines()
-        for z in tqdm(range(31, 41, 1)):
-          if sys.argv[5] == 'single':
-            pass
-            '''for line in tqdm(lines):
-              susp, src = line.split()
-              single_process(os.path.join(suspdir, susp),
-                             os.path.join(srcdir, src), outdir)'''
+        if sys.argv[5] == 'single':
+          pass
+          '''for line in tqdm(lines):
+            susp, src = line.split()
+            single_process(os.path.join(suspdir, susp),
+                           os.path.join(srcdir, src), outdir)'''
+        else:
+          #final_outdir = os.path.join(outdir, str(z)) + "/"
+          final_outdir = outdir
+          if os.path.exists(final_outdir) is False:
+            os.mkdir(final_outdir)
+          if sim == 'sbert':
+            parallel_process(
+              lines, 
+              final_outdir, 
+              unit1='embedding_path', 
+              unit2='embedding_path', 
+              z_thresh=z,
+              sim='sbert',
+              double_break_for_paragraphs=False
+            )
+          elif sim == 'jaccard':
+            parallel_process(
+              lines, 
+              final_outdir, 
+              unit1='sentence', 
+              unit2='sentence', 
+              z_thresh=z,
+              sim='jaccard',
+              double_break_for_paragraphs=False
+            )
           else:
-            final_outdir = os.path.join(outdir, str(z)) + "/"
-            if os.path.exists(final_outdir) is False:
-              os.mkdir(final_outdir)
-            if sim == 'sbert':
-              parallel_process(
-                lines, 
-                final_outdir, 
-                unit1='embedding_path', 
-                unit2='embedding_path', 
-                z_thresh=z,
-                sim='sbert',
-                double_break_for_paragraphs=False
-              )
-            elif sim == 'jaccard':
-              parallel_process(
-                lines, 
-                final_outdir, 
-                unit1='sentence', 
-                unit2='sentence', 
-                z_thresh=z,
-                sim='jaccard',
-                double_break_for_paragraphs=False
-              )
-            else:
-              assert(False)
+            assert(False)
     else:
         print('\n'.join(["Unexpected number of commandline arguments.",
                          "Usage: ./pan12-plagiarism-text-alignment-example.py {pairs} {src-dir} {susp-dir} {out-dir} {paralllel/single}"]))

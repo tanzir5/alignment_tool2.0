@@ -14,15 +14,46 @@ of each respective strategy
 8. See if we can use 5 directly or if we have to opt for 4 with explanations.
 '''
 
-python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_05-summary-obfuscation/pairs data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/ data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/susp/ data/experiments/pan13/outputs/jaccard_05_sent/ parallel jaccard
+small dataset run sbert:
+------------------------
+
+python experiments/pan13/run.py data/experiments/pan13/small_dataset/small_01-no-plagiarism/pairs data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/src/ data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/susp/ data/experiments/pan13/outputs/sbert_01_sent/ parallel sbert
 
 
+evaluations:
+------------
+small eval:
+-----------
 python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_03-random-obfuscation/  -d data/experiments/pan13/outputs/jaccard_03_sent/-1
 
+full eval:
+----------
+python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/03-random-obfuscation/  -d data/experiments/pan13/full_outputs/sbert_03_sent_5
 
 subdirectory command
+--------------------
+eval small sub jaccard:
+-----------------------
 python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/check_temp/  -d data/experiments/pan13/outputs/check_jaccard/
 
+eval full sub sbert:
+--------------------
+python experiments/pan13/eval2.py -p data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/  -d data/experiments/pan13/full_outputs/sbert/
+
+sbert commands(embeddings) run:
+-------------------------------
+small:
+------
+python experiments/pan13/run.py data/experiments/pan13/small_dataset/small_01-no-plagiarism/pairs data/experiments/pan13/embeddings/src/sentences/ data/experiments/pan13/embeddings/susp/sentences/ data/experiments/pan13/outputs/sbert_01_sent/ parallel sbert
 
 
-python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/small_02-no-obfuscation/pairs data/experiments/pan13/embeddings/src/sentences/ data/experiments/pan13/embeddings/susp/sentences/ data/experiments/pan13/outputs/sbert_02_sent/ parallel
+full (sentences):
+------------------
+python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/01-no-plagiarism/pairs data/experiments/pan13/embeddings/src/sentences/ data/experiments/pan13/embeddings/susp/sentences/ data/experiments/pan13/full_outputs_5_sbert/sbert_01/ parallel sbert 5
+
+
+
+full (paragraphs):
+------------------
+python experiments/pan13/run.py data/experiments/pan13/pan13-text-alignment-training-corpus-2013-01-21/pairs data/experiments/pan13/embeddings/src/paragraphs/ data/experiments/pan13/embeddings/susp/paragraphs/ data/experiments/pan13/full_outputs/sbert_05_para_6/ parallel sbert 6
+
