@@ -545,7 +545,7 @@ class Preprocessor:
     return raw_sim_matrix
 
   def get_tf_idf_sim(self, seq_a, seq_b):
-    vectorizer = TfidfVectorizer(stop_words = {'english'})
+    vectorizer = TfidfVectorizer(stop_words = {'english'}, max_features=768)
     all_tokens = list(copy.deepcopy(seq_a))
     all_tokens.extend(list(seq_b))
     vectorizer = vectorizer.fit(all_tokens)
