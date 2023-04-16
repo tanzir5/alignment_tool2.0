@@ -84,6 +84,9 @@ def align_sequences(
   no_gap=True,
   double_break_for_paragraphs=True,
   save_emb_dirs=None,
+  gap_start_penalty=-0.9, 
+  gap_continue_penalty=-0.5, 
+  matching_strategy="ONE_TO_ONE",
   return_preprocessor=False,
   return_aligner=False,
 ): 
@@ -107,11 +110,22 @@ def align_sequences(
   aligner = Aligner(
     preprocessor.sim_matrix, 
     ignore=ignore,
-    no_gap=no_gap
+    no_gap=no_gap,
+    matching_strategy=matching_strategy,
+    gap_start_penalty=gap_start_penalty, 
+    gap_continue_penalty=gap_continue_penalty, 
   )
   aligner.compute_smith_waterman()
   alignments, _, _ = aligner.create_alignments()
   ret = {}
+  if preprocessor.indices_a is None or preprocessor.indices_b is None:
+    ret['alignments'] = alignments
+    if return_preprocessor:
+      ret['preprocessor'] = preprocessor
+    if return_aligner:
+      ret['aligner'] = aligner
+    return ret  
+  
   aligned_segments, removed_seq1, removed_seq2 = prepare_all_with_indices(
     alignments, 
     preprocessor.indices_a, 

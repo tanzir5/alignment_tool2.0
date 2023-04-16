@@ -567,7 +567,7 @@ class Preprocessor:
     for (i, element) in enumerate(seq_b):
       words_multisets_B.append(self.get_words_multiset(element))
         
-    for (i, token_A) in tqdm(enumerate(seq_a)):
+    for (i, token_A) in enumerate(seq_a):
       for (j, token_B) in enumerate(seq_b):
         sim_matrix[i][j] = self.get_jaccard_value(
           words_multisets_A[i], words_multisets_B[j]
@@ -577,9 +577,9 @@ class Preprocessor:
   #not fixed functions  
   def _segment_into_seq(self, tokens, unit_size):
     if unit_size == 'word':
-      return words.split()
+      return tokens.split()
 
-  def _get_hamming_sim_seq(self, seq_a, seq_b):
+  def _get_hamming_sim_unit(self, seq_a, seq_b):
     if len(seq_a) > len(seq_b):
       seq_a, seq_b = seq_b, seq_a
     window_len = len(seq_b) / len(seq_a)
@@ -602,15 +602,13 @@ class Preprocessor:
       seq_list.append(self._segment_into_seq(token, unit_size))
     return seq_list
   
-  def hamming_sim(self, seq_a, seq_b, unit_size='word'):
-    print("here")
+  def get_hamming_sim(self, seq_a, seq_b, unit_size='word'):
     sim_matrix = np.zeros((len(seq_a), len(seq_b)))
     seq_a_list = self._segment_into_seq_list(seq_a, unit_size)
     seq_b_list = self._segment_into_seq_list(seq_b, unit_size)
-    print("done")
-    for (i, seq_a) in tqdm(enumerate(seq_a_list)):
+    for (i, seq_a) in enumerate(seq_a_list):
       for (j, seq_b) in enumerate(seq_b_list):
-        sim_matrix[i][j] = self._get_hamming_sim_seq(seq_a, seq_b)
+        sim_matrix[i][j] = self._get_hamming_sim_unit(seq_a, seq_b)
     return sim_matrix
 
   def get_gloves_multiset(self, token):

@@ -2,7 +2,11 @@
 import numpy as np
 
 INF = 1e9
-    
+ONE_TO_ONE = "ONE_TO_ONE"
+ONE_TO_MANY = "ONE_TO_MANY"
+MANY_TO_ONE = "MANY_TO_ONE"
+MANY_TO_MANY = "MANY_TO_MANY"
+
 class Aligner:
   def __init__(self, 
     similarity_matrix, 
@@ -10,7 +14,8 @@ class Aligner:
     no_gap=True, 
     gap_start_penalty=-0.9, 
     gap_continue_penalty=-0.5, 
-    use_global_prior=False
+    use_global_prior=False,
+    matching_strategy=ONE_TO_ONE,
   ):
     if ignore is None:
       ignore = [set(), set()]
@@ -21,6 +26,7 @@ class Aligner:
     self.gap_continue_penalty = gap_continue_penalty
     self.use_global_prior = use_global_prior
     self.sw_computed = False
+    self.matching_strategy = matching_strategy
 
     if self.no_gap:
       self.gap_start_penalty = -INF
@@ -112,8 +118,28 @@ class Aligner:
                 best = current_value
                 self.parent[(i, j, gc_1, gc_2)] = (i-1, j-1, 0, 0)
           
+              if self.matching_strategy in [ONE_TO_MANY, MANY_TO_MANY]:
+                # try matching the first one with multiple units from the second
+                # sequence
+
+                current_value = (self.dp[i][j-1][1][0] + 
+                                 self.similarity_matrix[i-1][j-1] + gb) 
+                if best < current_value:
+                  best = current_value
+                  self.parent[(i, j, gc_1, gc_2)] = (i, j-1, 1, 0)
+
+              if self.matching_strategy in [MANY_TO_ONE, MANY_TO_MANY]:
+                # try matching the second one with multiple units from the first
+                # sequence
+
+                current_value = (self.dp[i-1][j][0][1] + 
+                                 self.similarity_matrix[i-1][j-1] + gb) 
+                if best < current_value:
+                  best = current_value
+                  self.parent[(i, j, gc_1, gc_2)] = (i-1, j, 0, 1)
+
               self.dp[i][j][gc_1][gc_2] = best
-                    
+              
 
   def set_global_align_variables(self):
     n = self.dp.shape[0]
@@ -168,6 +194,7 @@ class Aligner:
     if (seq1_st > seq1_end) or (seq2_st > seq2_end):
       return None 
     else: 
+      alignment_score = self.dp_2d[seq1_end][seq2_end] - self.dp_2d[seq1_st-1][seq2_st-1]
       seq1_st -= 1
       seq2_st -= 1
       seq1_end -= 1
