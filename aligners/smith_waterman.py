@@ -195,6 +195,8 @@ class Aligner:
       return None 
     else: 
       alignment_score = self.dp_2d[seq1_end][seq2_end] - self.dp_2d[seq1_st-1][seq2_st-1]
+      if alignment_score <= 0:
+        return None
       seq1_st -= 1
       seq2_st -= 1
       seq1_end -= 1
