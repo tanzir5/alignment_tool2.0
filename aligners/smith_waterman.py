@@ -210,7 +210,7 @@ class Aligner:
         'alignment_score':alignment_score,
       } 
     
-  def create_alignments(self, match_element_pair_threshold=-0.2, top_k=-1):
+  def create_alignments(self, match_element_pair_threshold=0, top_k=-1):
     if self.sw_computed is False:
       self.compute_smith_waterman()
     self.set_global_align_variables()
