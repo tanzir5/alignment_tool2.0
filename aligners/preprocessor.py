@@ -297,7 +297,7 @@ class Preprocessor:
 
   def _segment_into_paragraph(self, text, double_blank=True):
     if double_blank == True:
-      pattern = '\n\n\s*'
+      pattern = '\n\s*\n\s*'
     else:
       pattern = '\n\s*'
     indices = [{'break_st':m.start(), 'break_end':m.end()-1} 
