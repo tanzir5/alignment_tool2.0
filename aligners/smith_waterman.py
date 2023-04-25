@@ -186,7 +186,14 @@ class Aligner:
         #print(self.similarity_matrix[i-1][j-1])
         self.s1_to_s2_align[i] = j
         self.s2_to_s1_align[j] = i
-        
+      
+      if (self.matching_strategy in [ONE_TO_MANY, MANY_TO_MANY] and 
+        current_parent == (i, j-1, 1, 0)):
+        self.s2_to_s1_align[j] = i
+      if (self.matching_strategy in [MANY_TO_ONE, MANY_TO_MANY] and 
+        current_parent == (i-1, j, 0, 1)):
+        self.s1_to_s2_align[i] = j 
+
       i, j, gc_1, gc_2 = current_parent
     
     seq1_st = i+1
@@ -231,5 +238,6 @@ class Aligner:
           self.s2_to_s1_align[i-1] = self.s2_to_s1_align[i] - 1
         else:
           self.s2_to_s1_align[i-1] = self.s2_to_s1_align[i]
-
+    self.s1_to_s2_align = self.s1_to_s2_align[:-1]
+    self.s2_to_s1_align = self.s2_to_s1_align[:-1]
     return aligned_segments, self.s1_to_s2_align, self.s2_to_s1_align

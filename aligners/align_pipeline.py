@@ -118,12 +118,13 @@ def align_sequences(
   aligner.compute_smith_waterman()
   alignments, _, _ = aligner.create_alignments()
   ret = {}
+  if return_preprocessor:
+    ret['preprocessor'] = preprocessor
+  if return_aligner:
+    ret['aligner'] = aligner
+  
   if preprocessor.indices_a is None or preprocessor.indices_b is None:
     ret['alignments'] = alignments
-    if return_preprocessor:
-      ret['preprocessor'] = preprocessor
-    if return_aligner:
-      ret['aligner'] = aligner
     return ret  
   
   aligned_segments, removed_seq1, removed_seq2 = prepare_all_with_indices(
@@ -138,8 +139,4 @@ def align_sequences(
   ret['removed_seq1'] = removed_seq1
   ret['removed_seq2'] = removed_seq2
   
-  if return_preprocessor:
-    ret['preprocessor'] = preprocessor
-  if return_aligner:
-    ret['aligner'] = aligner
   return ret
