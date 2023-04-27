@@ -190,10 +190,13 @@ class Aligner:
       if (self.matching_strategy in [ONE_TO_MANY, MANY_TO_MANY] and 
         current_parent == (i, j-1, 1, 0)):
         self.s2_to_s1_align[j] = i
+        if self.s1_to_s2_align[i] == -1:
+          self.s1_to_s2_align[i] = j
       if (self.matching_strategy in [MANY_TO_ONE, MANY_TO_MANY] and 
         current_parent == (i-1, j, 0, 1)):
         self.s1_to_s2_align[i] = j 
-
+        if self.s2_to_s1_align[j] == -1:
+          self.s2_to_s1_align[j] = i
       i, j, gc_1, gc_2 = current_parent
     
     seq1_st = i+1
