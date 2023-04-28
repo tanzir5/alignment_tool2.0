@@ -243,4 +243,6 @@ class Aligner:
           self.s2_to_s1_align[i-1] = self.s2_to_s1_align[i]
     self.s1_to_s2_align = self.s1_to_s2_align[:-1]
     self.s2_to_s1_align = self.s2_to_s1_align[:-1]
+
+    aligned_segments.sort(reverse = True, key=lambda x: x['alignment_score'])
     return aligned_segments, self.s1_to_s2_align, self.s2_to_s1_align

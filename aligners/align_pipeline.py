@@ -35,11 +35,13 @@ def get_alignments_with_indices(
     seq1_end = indices_a[alignment['seq1_end']]['end']
     seq2_st = indices_b[alignment['seq2_st']]['st']
     seq2_end = indices_b[alignment['seq2_end']]['end']
+    alignment_score = alignment['alignment_score']
     cur_dict = {
       'seq1_st':seq1_st,
       'seq1_end':seq1_end,
       'seq2_st':seq2_st,
       'seq2_end':seq2_end,
+      'alignment_score':alignment_score
     }
     if from_embedding == False:
       cur_dict['text_a'] = seq_a_text[seq1_st:seq1_end+1]
