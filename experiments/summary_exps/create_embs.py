@@ -15,9 +15,10 @@ for fname in glob.glob('data/summary_exps/final_jsons/*.json'):
       text_seq = data_dict[key][0]
     name = fname.split('/')[-1]
     write_path = 'data/summary_exps/embs/'+key+"/"+name 
+    print(write_path)
     pre = Preprocessor(
         text_seq, 
         sim_config={'func':'sbert'}, 
-        save_emb_dirs=write_path,
+        save_emb_dirs=[write_path],
         create_embs_only=True
       )
