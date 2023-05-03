@@ -20,8 +20,10 @@ import json
 
 INF = 1e9
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-nlp = spacy.load("en_core_web_sm")
-all_stopwords = nlp.Defaults.stop_words
+nlp_word_tokenizer = spacy.load("en_core_web_sm", enable=['tokenizer'])
+nlp_sentencizer = spacy.load("en_core_web_sm", enable=['sentencizer'])
+nlp_sentencizer.add_pipe('sentencizer')
+all_stopwords = nlp_word_tokenizer.Defaults.stop_words
 print("Running on ", DEVICE)
 
 VALID_TOKEN_SIZES = [
@@ -278,7 +280,7 @@ class Preprocessor:
     return [ch for ch in text]
 
   def _segment_into_word(self, text):
-    doc = nlp(text)
+    doc = nlp_word_tokenizer(text)
     words = []
     indices = []
     for word in doc:
@@ -287,7 +289,7 @@ class Preprocessor:
     return words, indices
 
   def _segment_into_sentence(self, text):
-    doc = nlp(text)
+    doc = nlp_sentencizer(text)
     sentences = []
     indices = []
     for sent in doc.sents:
@@ -380,7 +382,7 @@ class Preprocessor:
 
   def get_words_multiset(self, token):
     words_multiset = Multiset()
-    doc = nlp(token.lower())
+    doc = nlp_word_tokenizer(token.lower())
     for word in doc:
       if word.text not in all_stopwords and word.text.isalnum():
         words_multiset.add(word.text)
@@ -448,7 +450,7 @@ class Preprocessor:
       self._init_glove()
     ret = []
     for element in tqdm(seq):
-      doc = nlp(element.lower())
+      doc = nlp_word_tokenizer(element.lower())
       mean_emb = torch.zeros(300)
       for word in doc:
         if word.text not in all_stopwords and word.text.isalnum():
@@ -613,7 +615,7 @@ class Preprocessor:
 
   def get_gloves_multiset(self, token):
       words_list = []
-      doc = nlp(token.lower())
+      doc = nlp_word_tokenizer(token.lower())
       for word in doc:
         if (word.text not in all_stopwords and
          word.text.isalnum() and word.text in glove.stoi
