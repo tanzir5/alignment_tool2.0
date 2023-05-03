@@ -72,8 +72,8 @@ all_texts['book_chunk'].sort(key=lambda x: len(x[1]), reverse=True)
 
 
 
-#SIM = 'sbert'
-SIM = 'jaccard'
+SIM = 'sbert'
+#SIM = 'jaccard'
 
 if __name__ == "__main__":
   if SIM == 'jaccard':
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         fname = 'data/summary_exps/embs/'+unit_size+'/'+name+'.json'
         seq2 = fname  
         with open(seq2) as f:
-          json_obj = json.load(seq2)
+          json_obj = json.load(f)
           length = len(json_obj['embedding'])
         unrelated_indices = get_random_indices_similar_len(all_texts[unit_size], length, 99, name)
         other_name = name
