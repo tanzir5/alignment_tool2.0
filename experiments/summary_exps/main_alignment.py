@@ -82,6 +82,8 @@ if __name__ == "__main__":
       length = len(my_text[unit_size])
       unrelated_indices = get_random_indices_similar_len(all_texts[unit_size], length, 99, name)
       for idx in unrelated_indices:
+        seq2 = all_texts[unit_size][idx][1]  
+        other_name = all_texts[unit_size][idx][0]
         job = pool.apply_async(
                 align_single_job, 
                 (seq1, seq2, name, other_name, unit_size, 0)
