@@ -40,8 +40,8 @@ def align_single_job(seq1, seq2, summary_name, book_name, unit_size, real, sim):
     ret = align_sequences(
       seq1=seq1,
       seq2=seq2,
-      unit1='embedding',
-      unit2='embedding',
+      unit1='embedding_path',
+      unit2='embedding_path',
       sim='sbert',
       z_thresh=2)
     if len(ret['alignments']) == 0:
