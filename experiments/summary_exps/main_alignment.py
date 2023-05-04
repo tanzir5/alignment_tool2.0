@@ -7,12 +7,33 @@ import numpy as np
 from tqdm import tqdm
 import multiprocessing as mp
 
+SIM = 'sbert'
+#SIM = 'jaccard'
+
+all_names = []
+
+all_texts = {'book_sent':[], 'book_para':[], 'book_chunk':[]}
+
+for fname in glob.glob('data/summary_exps/final_jsons/*.json'):
+  name = fname.split('/')[-1][:-5]
+  all_names.append(name)
+  with open(fname) as f:
+    data_dict = json.load(f)
+    #print(data_dict.keys())
+    all_texts['book_sent'].append((name, data_dict['book_sent'][0]))
+    all_texts['book_para'].append((name, data_dict['book_para'][0]))
+    all_texts['book_chunk'].append((name, data_dict['book_chunk']))
+
+all_texts['book_sent'].sort(key=lambda x: len(x[1]), reverse=True)
+all_texts['book_para'].sort(key=lambda x: len(x[1]), reverse=True)
+all_texts['book_chunk'].sort(key=lambda x: len(x[1]), reverse=True)
+
 def get_random_indices_similar_len(texts, length, k, illegal_name):
   mn_length = length * .7
   mx_length = length * 1.3
   candidates = []
   for i, text in enumerate(texts):
-    if mn_length <= len(text[1]) <= mx_length:
+    if mn_length <= len(text[1]) <= mx_length and text[0] != illegal_name:
       candidates.append(i)
   if len(candidates) <= k:
     return candidates
@@ -52,28 +73,11 @@ def align_single_job(seq1, seq2, summary_name, book_name, unit_size, real, sim):
     df.to_csv(df_write_path, mode='a', header=os.path.exists(df_write_path)==False)
 
 
-all_names = []
-
-all_texts = {'book_sent':[], 'book_para':[], 'book_chunk':[]}
-
-for fname in glob.glob('data/summary_exps/final_jsons/*.json'):
-  name = fname.split('/')[-1][:-5]
-  all_names.append(name)
-  with open(fname) as f:
-    data_dict = json.load(f)
-    #print(data_dict.keys())
-    all_texts['book_sent'].append((name, data_dict['book_sent'][0]))
-    all_texts['book_para'].append((name, data_dict['book_para'][0]))
-    all_texts['book_chunk'].append((name, data_dict['book_chunk']))
-
-all_texts['book_sent'].sort(key=lambda x: len(x[1]), reverse=True)
-all_texts['book_para'].sort(key=lambda x: len(x[1]), reverse=True)
-all_texts['book_chunk'].sort(key=lambda x: len(x[1]), reverse=True)
 
 
 
-SIM = 'sbert'
-#SIM = 'jaccard'
+
+
 
 if __name__ == "__main__":
   if SIM == 'jaccard':
@@ -90,9 +94,12 @@ if __name__ == "__main__":
         'book_chunk':data_dict['book_chunk'], 
       }
       seq1 = data_dict['summary_sent'][0]
-      for unit_size in ['book_chunk', 'book_para']:
+      for unit_size in ['book_sent']:#, 'book_chunk', 'book_para']:
         length = len(my_text[unit_size])
-        unrelated_indices = get_random_indices_similar_len(all_texts[unit_size], length, 99, name)
+        K = 49
+        unrelated_indices = get_random_indices_similar_len(all_texts[unit_size], length, K, name)
+        if len(unrelated_indices) < K:
+          continue
         seq2 = my_text[unit_size]  
         other_name = name
         job = pool.apply_async(
@@ -124,7 +131,10 @@ if __name__ == "__main__":
         with open(seq2) as f:
           json_obj = json.load(f)
           length = len(json_obj['embedding'])
-        unrelated_indices = get_random_indices_similar_len(all_texts[unit_size], length, 99, name)
+        K = 49
+        unrelated_indices = get_random_indices_similar_len(all_texts[unit_size], length, K, name)
+        if len(unrelated_indices) < K:
+          continue
         other_name = name
         job = pool.apply_async(
                 align_single_job, 
