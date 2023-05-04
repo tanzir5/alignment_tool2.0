@@ -36,6 +36,7 @@ VALID_SIM_FUNCS = [
 
 GLOVE_DIM = 300
 SBERT_MODEL_NAME = 'msmarco-distilbert-cos-v5'
+SBERT_SEQ_LEN = 300
 
 DEFAULT_Z_THRESHOLD = 1
 
@@ -464,10 +465,31 @@ class Preprocessor:
     ret = torch.cat(ret)
     return ret.detach().cpu().numpy()
 
+  def chunk_seq(self, seq, chunk_size):
+    words = seq.split()
+    chunks = []
+    for i in range(0, len(words), chunk_size):
+      chunks.append(" ".join(words[i:i+chunk_size]))
+    return chunks 
+
   def get_sbert_embedding(self, seq):
     if self.sbert is None:
       self._init_sbert()
-    ret_np = self.sbert.encode(seq)
+    chunking_needed = False
+    for s in seq:
+      if len(s.split()) > SBERT_SEQ_LEN:
+        chunking_needed = True
+        break
+    if chunking_needed == False:
+      ret_np = self.sbert.encode(seq, SBERT_SEQ_LEN)
+    else:
+      ret_np = []
+      for s in seq:
+        chunks = self.chunk_seq(s, SBERT_SEQ_LEN)
+        chunk_embs = self.sbert.encode(chunks)
+        emb = np.mean(chunk_embs, axis=0)
+        ret_np.append(emb)
+      ret_np = np.array(ret_np)
     return ret_np 
 
   def get_bert_embedding(self, tokens):
