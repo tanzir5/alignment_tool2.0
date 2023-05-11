@@ -122,9 +122,6 @@ class Preprocessor:
       raise Exception(
         size_a + " and " + size_b + " are not mutually compatible")
   
-    if clip_length is not None:
-    	seq_a = seq_a[:clip_length]
-    	seq_b = seq_b[:clip_length]
 
     if isinstance(seq_a, str) and size_a != 'embedding_path':
       seq_a, self.indices_a = self._segment(seq_a, size_a)
@@ -134,6 +131,11 @@ class Preprocessor:
       seq_b, self.indices_b = self.load_embedding(seq_b)
       size_a = 'embedding'
       size_b = 'embedding'
+
+    
+    if clip_length is not None:
+      seq_a = seq_a[:clip_length[0]]
+      seq_b = seq_b[:clip_length[1]]
 
     self.final_seq_a = seq_a
     self.final_seq_b = seq_b
