@@ -123,7 +123,8 @@ class Aligner:
                 # sequence
 
                 current_value = (self.dp[i][j-1][1][0] + 
-                                 self.similarity_matrix[i-1][j-1] + gb) 
+                                 self.similarity_matrix[i-1][j-1] + gb +
+                                 self.gap_start_penalty) 
                 if best < current_value:
                   best = current_value
                   self.parent[(i, j, gc_1, gc_2)] = (i, j-1, 1, 0)
@@ -133,7 +134,8 @@ class Aligner:
                 # sequence
 
                 current_value = (self.dp[i-1][j][0][1] + 
-                                 self.similarity_matrix[i-1][j-1] + gb) 
+                                 self.similarity_matrix[i-1][j-1] + gb +
+                                 self.gap_start_penalty) 
                 if best < current_value:
                   best = current_value
                   self.parent[(i, j, gc_1, gc_2)] = (i-1, j, 0, 1)
@@ -187,13 +189,17 @@ class Aligner:
         self.s1_to_s2_align[i] = j
         self.s2_to_s1_align[j] = i
       
-      if (self.matching_strategy in [ONE_TO_MANY, MANY_TO_MANY] and 
-        current_parent == (i, j-1, 1, 0)):
+      if ((self.matching_strategy in [ONE_TO_MANY, MANY_TO_MANY]) and 
+          (current_parent == (i, j-1, 1, 0)) and
+          (self.similarity_matrix[i-1][j-1] > match_element_pair_threshold)
+        ):
         self.s2_to_s1_align[j] = i
         if self.s1_to_s2_align[i] == -1:
           self.s1_to_s2_align[i] = j
-      if (self.matching_strategy in [MANY_TO_ONE, MANY_TO_MANY] and 
-        current_parent == (i-1, j, 0, 1)):
+      if ((self.matching_strategy in [MANY_TO_ONE, MANY_TO_MANY]) and 
+          (current_parent == (i-1, j, 0, 1))
+          (self.similarity_matrix[i-1][j-1] > match_element_pair_threshold)
+        ):
         self.s1_to_s2_align[i] = j 
         if self.s2_to_s1_align[j] == -1:
           self.s2_to_s1_align[j] = i
