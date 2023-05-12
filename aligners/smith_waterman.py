@@ -197,7 +197,7 @@ class Aligner:
         if self.s1_to_s2_align[i] == -1:
           self.s1_to_s2_align[i] = j
       if ((self.matching_strategy in [MANY_TO_ONE, MANY_TO_MANY]) and 
-          (current_parent == (i-1, j, 0, 1))
+          (current_parent == (i-1, j, 0, 1)) and
           (self.similarity_matrix[i-1][j-1] > match_element_pair_threshold)
         ):
         self.s1_to_s2_align[i] = j 
