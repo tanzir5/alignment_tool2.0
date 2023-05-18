@@ -606,6 +606,10 @@ class Preprocessor:
       return tokens.split()
 
   def _get_hamming_sim_unit(self, seq_a, seq_b):
+    if len(seq_a) == 0 and len(seq_b) == 0:
+      return 0
+    elif len(seq_a) == 0 or len(seq_b) == 0:
+      return 0
     if len(seq_a) > len(seq_b):
       seq_a, seq_b = seq_b, seq_a
     window_len = len(seq_b) / len(seq_a)
