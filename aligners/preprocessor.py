@@ -7,7 +7,6 @@ from sentence_transformers import SentenceTransformer
 from sentence_transformers import util
 from sklearn.feature_extraction.text import TfidfVectorizer
 from transformers import BertModel, BertTokenizer
-from tqdm import tqdm
 
 import copy
 import numpy as np
@@ -452,7 +451,7 @@ class Preprocessor:
     if self.glove is None:
       self._init_glove()
     ret = []
-    for element in tqdm(seq):
+    for element in seq:
       count = 0
       doc = nlp_word_tokenizer(element.lower())
       mean_emb = torch.zeros(300)
