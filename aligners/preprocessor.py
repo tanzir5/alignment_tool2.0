@@ -453,6 +453,7 @@ class Preprocessor:
       self._init_glove()
     ret = []
     for element in tqdm(seq):
+      count = 0
       doc = nlp_word_tokenizer(element.lower())
       mean_emb = torch.zeros(300)
       for word in doc:
