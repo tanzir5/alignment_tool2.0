@@ -22,3 +22,6 @@ sent1	manual_alignments	manual_alignments_1_1	sent2	chat_gpt_alignments	alignmen
 | sent2 | sentences from the 2nd book's story |
 | chat_gpt_alignments | pairs from ChatGPT3.5 |
 | alignment_tool_alignments | pairs from GNAT |
+
+
+This work is licensed under CC BY-SA 4.0 
